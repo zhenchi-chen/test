@@ -1,0 +1,255 @@
+//
+//  AboutViewController.m
+//  Kids
+//
+//  Created by 陈镇池 on 16/10/10.
+//  Copyright © 2016年 chen_zhenchi_lehu. All rights reserved.
+//
+
+#import "AboutViewController.h"
+#import "CommonProblemViewController.h"
+#import "HowToUseViewController.h"
+#import "SoftwareLogViewController.h"
+#import "UIImage+LXDCreateBarcode.h" //二维码生成
+#import "LoginController.h"
+#import "SoftwareDiaryViewController.h"
+
+@interface AboutViewController ()<UITableViewDataSource,UITableViewDelegate>
+{
+    UIView *headView;
+    UIView *footerView;
+    NSArray *arr;
+}
+
+@property (nonatomic,strong)UITableView *tableView;
+
+@end
+
+@implementation AboutViewController
+
+
+#pragma 网络数据返回
+-(void)httpBaseRequestUtilDelegate:(NSData *)data api:(NSString *)api reqDic:(NSMutableDictionary *)reqDic reqHeadDic:(NSMutableDictionary *)reqHeadDic rspHeadDic:(NSMutableDictionary *)rspHeadDic{
+    if ([api isEqualToString:@"退出登陆"]) {
+        if (data != nil) {
+            
+            NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            //            NSLog(@"dic = %@",dic);
+            BaseDataModel *baseModel = [BaseDataModel objectWithKeyValues:dic];
+//            NSDictionary *dataDic = (NSDictionary *)baseModel.data;
+            
+            
+            if (baseModel.code == 200) {
+                if (baseModel.data != nil) {
+                    //清空缓存信息
+                    [[[DeviceListTool alloc]init]deleteAllData];
+                } else {
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"bluetooth_real_time_fragment_chart_no_data",nil)];
+                }
+            }
+        } else {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"net_wrong_prompt",nil)];
+        }
+    }
+    
+}
+
+//加载顶部的View
+- (void)initHeadView {
+    headView = [[UIView alloc]initWithFrame:CGRectMake(0, 64, MainScreenWidth, 0)];
+    headView.backgroundColor = RGB(247, 247, 247);
+    [self.view addSubview:headView];
+    
+    UIImageView *logoIv = [[UIImageView alloc]initWithFrame:CGRectMake((MainScreenWidth-40)/2, 10*Height, 40, 40)];
+    logoIv.image = [UIImage imageNamed:@"logo"];
+    [headView addSubview:logoIv];
+    
+    UILabel *versionLb = [[UILabel alloc]initWithFrame:CGRectMake(0,height_y(logoIv), MainScreenWidth, 30)];
+    versionLb.textAlignment = NSTextAlignmentCenter;
+    versionLb.text = [NSString stringWithFormat:@"%@ For iPhone ver:%@",NSLocalizedString(@"app_name",nil),Software_version];
+    versionLb.font = [UIFont systemFontOfSize:12];
+    [headView addSubview:versionLb];
+    
+    
+    UIImage * image = [UIImage imageOfQRFromURL: @"https://itunes.apple.com/cn/app/huang-jin-shui-mian/id1147972068?mt=8" codeSize: 100 red: 0 green: 0 blue: 0 insertImage: [UIImage imageNamed: @"logo"] roundRadius: 15.0f];
+    
+    UIImageView *ewmIV = [[UIImageView alloc] initWithFrame:CGRectMake((MainScreenWidth-100)/2, height_y(versionLb), 100, 100)];
+    ewmIV.image = image;
+    [headView addSubview: ewmIV];
+
+    
+    UILabel *contentLb = [[UILabel alloc]initWithFrame:CGRectMake(0, height_y(ewmIV), MainScreenWidth, 30)];
+    contentLb.textAlignment = NSTextAlignmentCenter;
+    contentLb.text = NSLocalizedString(@"about_fragment_content",nil);
+    contentLb.font = [UIFont systemFontOfSize:8];
+    [headView addSubview:contentLb];
+    
+    headView.height = height_y(contentLb)+20*Height;
+    
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    //设置导航栏的背景色
+    [self setNacColorWhite];
+    [self navSet:NSLocalizedString(@"about_fragment_title",nil)];
+    
+    
+    arr = @[NSLocalizedString(@"how_to_use_fragment_title",nil),NSLocalizedString(@"question_fragment_title",nil),@"软件日记"];
+    
+    //加载顶部的View
+//    [self initHeadView];
+    
+    [self initFooterView];
+    
+    _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, MainScreenWidth, MainScreenHeight-64)];
+    _tableView.backgroundColor = [UIColor whiteColor];
+    _tableView.backgroundColor = RGB(247, 247, 247);
+    //分割线颜色
+//    _tableView.separatorColor = RGB(212, 212, 212);
+    
+    _tableView.delegate = self;
+    _tableView.dataSource = self;
+    _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    _tableView.tableHeaderView = headView;
+    _tableView.tableFooterView = footerView;
+    _tableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0);
+    //    _tableView.bounces = NO;
+    [self.view addSubview:_tableView];
+
+    
+}
+
+#pragma mark 加载FooterView
+- (void)initFooterView
+{
+    footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, MainScreenWidth, 100)];
+    //    footerView.backgroundColor = [UIColor lightGrayColor];
+    
+    UILabel *versionLb = [[UILabel alloc]initWithFrame:CGRectMake(0,20, MainScreenWidth, 20)];
+    versionLb.textAlignment = NSTextAlignmentCenter;
+    versionLb.textColor = [UIColor lightGrayColor];
+    versionLb.font = [UIFont systemFontOfSize:12];
+    versionLb.text = [NSString stringWithFormat:@"%@%@",NSLocalizedString(@"setting_fragment_version",nil),Software_version];
+    [footerView addSubview:versionLb];
+    
+    
+    UIButton *exitBt = [self buildBtn:NSLocalizedString(@"personal_fragment_logout",nil)action:@selector(exitBtAction:) frame:CGRectMake(MainScreenWidth/4, 50, MainScreenWidth/2, 50)];
+    [footerView addSubview:exitBt];
+    
+}
+
+#pragma mark 退出登陆
+- (void)exitBtAction:(UIButton *)button
+{
+    
+    HttpBaseRequestUtil *req = [[HttpBaseRequestUtil alloc] init];
+    req.myDelegate = self;
+    NSMutableDictionary *reqDic = [NSMutableDictionary dictionary];
+    [reqDic setValue:@"退出登陆" forKey:@"api"];
+    [reqDic setValue:[de valueForKey:@"username"] forKey:@"username"];
+    [reqDic setValue:[de valueForKey:@"token"] forKey:@"token"];
+    [req reqDataWithUrl:LOGOUT reqDic:reqDic reqHeadDic:nil];
+    
+    LoginController *loginVC = [[LoginController alloc] init];
+    kAppDelegate.window.rootViewController = loginVC;
+    [de setValue:nil forKey:@"token"];
+    
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+#pragma -mark每个分区里面有多少个cell
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    
+    return 1;
+}
+
+#pragma -mark创建每个cell的方法
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *reusepool = @"cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reusepool];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reusepool];
+    }
+    
+    cell.textLabel.text = arr[indexPath.section];
+    cell.textLabel.textColor = RGB(0, 0, 0);
+    
+    cell.imageView.image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    //点击cell的颜色
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    return cell;
+}
+
+
+#pragma -mark设置cell的高度的方法
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    return 50;
+    
+    
+    
+}
+
+
+#pragma mark -- 点击cell方法
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    if (indexPath.section == 0) {
+        HowToUseViewController *howTUVC = [[HowToUseViewController alloc]init];
+        [self.navigationController pushViewController:howTUVC animated:YES];
+    }
+    else if (indexPath.section == 1){
+        CommonProblemViewController *commonPVC = [[CommonProblemViewController alloc]init];
+        [self.navigationController pushViewController:commonPVC animated:YES];
+    }
+    else if (indexPath.section == 2){
+        SoftwareDiaryViewController *softwareDiaryVC = [[SoftwareDiaryViewController alloc]init];
+        [self.navigationController pushViewController:softwareDiaryVC animated:YES];
+
+        
+    }
+    
+    
+}
+
+
+//设置分区个数,默认为1个
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return arr.count;
+}
+
+//分区头高度
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    return 1;
+    
+}
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end

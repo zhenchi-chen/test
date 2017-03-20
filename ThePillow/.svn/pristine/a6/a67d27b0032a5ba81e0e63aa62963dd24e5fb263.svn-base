@@ -1,0 +1,360 @@
+/*
+ Localizations.strings
+ Kids
+ 
+ Created by 陈镇池 on 16/9/18.
+ Copyright © 2016年 chen_zhenchi_lehu. All rights reserved.
+ */
+
+"app_name"="黃金睡眠";
+
+// 公用 
+"device_default_name"="未命名";
+"device_unknown_name"="未知設備";
+"qr_useless_content"="無效二維碼";
+"YES"="是";
+"NO"="不";
+"Developer"="開發者平臺";
+
+
+
+// NoDeviceFragment 
+"no_device_fragment_title"="添加設備";
+"no_device_fragment_add_hint"="還沒有設備，快去給自己添加壹個設備吧!";
+"no_device_fragment_add_hint_2"="添加後可以查看自己的睡眠數據。";
+"no_device_fragment_next"="下壹步";
+
+// LoginFragment 
+"login_fragment_title"="登錄";
+"login_fragment_welcome"="歡迎回來";
+"login_fragment_content"="登錄後繼續使用";
+"login_fragment_hint"="請輸入郵箱或手機號碼";
+"login_fragment_hint_2"="請輸入密碼";
+"login_fragment_content_2"="登錄";
+"login_fragment_content_3"="註冊";
+"login_fragment_warn"="請輸入賬戶名";
+"login_fragment_warn_2"="請輸入密碼";
+"login_fragment_warn_3"="賬戶名格式不正確";
+"login_fragment_warn_4"="密碼不得少於6位";
+"login_fragment_warn_5" = "妳輸入的賬號或蜜獁有誤";
+"login_fragment_warn_6" = "請重新輸入";
+
+// LabFragment 
+"lab_fragment_title"="Kids Lab";
+"lab_fragment_content"="心率變異性";
+"lab_fragment_content_2"="抵抗力指數";
+"lab_fragment_content_3"="記憶力指數";
+"lab_fragment_content_4"="呼吸暫停";
+
+// AddDeviceFragment 
+"add_device_fragment_title"="添加";
+"add_device_fragment_content"="添加我的設備";
+"add_device_fragment_content_2"="請選擇妳的設備版本";
+"add_device_fragment_content_3"="添加親友的設備";
+"add_device_fragment_content_4"="請掃描對方設備的二維碼";
+
+// Add2GDeviceFragment 
+"add_2g_device_fragment_title"="添加GPRS設備";
+"add_2g_device_fragment_content"="輸入產品編號查找設備";
+"add_2g_device_fragment_content_2"="請在產品背面找到產品編號輸入並搜索";
+"add_2g_device_fragment_sn_hint"="輸入產品編號";
+"add_2g_device_fragment_name_hint"="請給妳的設備命個名吧";
+"add_2g_device_fragment_button_yes"="確定";
+"add_2g_device_fragment_warn"="產品編碼格式有誤，請重新輸入";
+
+// AddBluetoothDeviceFragment 
+"add_bluetooth_device_fragment_title"="添加藍牙設備";
+"add_bluetooth_device_fragment_content"="選擇藍牙設備";
+"add_bluetooth_device_fragment_content_2"="請點擊搜索藍牙設備，選擇需要綁定的藍牙設備";
+"add_bluetooth_device_fragment_device_mac_hint"="點擊搜索藍牙設備";
+"add_bluetooth_device_fragment_device_name"="請給妳的設備命個名吧";
+"add_bluetooth_device_fragment_device_Initializes"="初始化設備";
+"add_bluetooth_device_fragment_yes"="確定";
+"add_bluetooth_device_fragment_warn"="請先搜索藍牙設備";
+"add_bluetooth_device_fragment_warn_2"="已取消藍牙初始化";
+
+// AddWifiDeviceFragment 
+"add_wifi_device_fragment_title"="添加WiFi設備";
+"add_wifi_device_fragment_content"="請按壹下中繼器上的配置按鈕，\n使設備進入設置狀態。";
+"add_wifi_device_fragment_content_2"="註意:每次僅能添加壹臺設備。";
+"add_wifi_device_fragment_hint"="請輸入該Wifi密碼";
+"add_wifi_device_fragment_hint_2"="請點擊這裏來連接設備";
+"add_wifi_device_fragment_hint_3"="請給妳的設備命個名吧";
+"add_wifi_device_fragment_yes"="確定";
+"add_wifi_device_fragment_warm"="請打開Wifi";
+"add_wifi_device_fragment_warm_2"="請先連接上WiFi";
+"add_wifi_device_fragment_warm_3"="請先輸入WiFi密碼";
+"add_wifi_device_fragment_warm_4"="請先連接設備";
+
+// BluetoothRealTimeFragment 
+"bluetooth_real_time_fragment_title"="實時";
+"bluetooth_real_time_fragment_default_status"="未知";
+"bluetooth_real_time_fragment_status_label"="狀態";
+"bluetooth_real_time_fragment_hr_label"="心率";
+"bluetooth_real_time_fragment_breath_label"="呼吸率";
+"bluetooth_real_time_fragment_move_label"="體動";
+"bluetooth_real_time_fragment_no_one"="無人";
+"bluetooth_real_time_fragment_on_bed"="在床";
+"bluetooth_real_time_fragment_chart_no_data"="無數據";
+
+// 藍牙公用 
+"bluetooth_version_obsolete"="系統版本必須4.3以上才支持BLE";
+"bluetooth_no_ble"="該手機不支持BLE藍牙";
+"bluetooth_no_bluetooth"="該手機不支持藍牙";
+"bluetooth_status_find"="正在搜索藍牙...";
+"bluetooth_connect"="正在連接設備...";
+"bluetooth_synchro"="同步數據中...";
+
+// DeviceListFragment 
+"device_list_fragment_title"="設備列表";
+
+// FindBluetoothDeviceFragment 
+"find_bluetooth_device_fragment_title"="搜索藍牙設備";
+"find_bluetooth_device_fragment_refresh"="刷新";
+"find_bluetooth_device_fragment_stop_refresh"="停止";
+
+// HowToUseFragment 
+"how_to_use_fragment_title"="如何使用";
+"how_to_use_fragment_tab_bluetooth"="藍牙版";
+"how_to_use_fragment_tab_gpre_wifi"="GPRS及WIFI版";
+
+// PersonalFragment 
+"personal_fragment_title"="我";
+"personal_fragment_none"="未填寫";
+"personal_fragment_sex"="性別";
+"personal_fragment_birthday"="生日";
+"personal_fragment_height"="身高";
+"personal_fragment_weight"="體重";
+"personal_fragment_address"="地區";
+"personal_fragment_logout"="退出登錄";
+"personal_fragment_man"="男";
+"personal_fragment_woman"="女";
+
+// QuestionFragment 
+"question_fragment_title"="常見問題";
+
+// RegisterFragment 
+"register_fragment_title"="註冊";
+"register_fragment_account_hint"="請輸入郵箱或手機號碼";
+"register_fragment_password_hint"="請輸入密碼";
+"register_fragment_password_again_hint"="請再次輸入密碼";
+"register_fragment_register"="註冊";
+"register_fragment_warn"="請輸入賬戶名";
+"register_fragment_warn_2"="請輸入密碼";
+"register_fragment_warn_3"="賬戶名格式不正確";
+"register_fragment_warn_4"="密碼不得少於6位";
+"register_fragment_warn_5"="請再次輸入密碼";
+"register_fragment_warn_6"="再次輸入的密碼與原密碼不相同";
+"register_fragment_succeed"="註冊成功";
+
+// AboutFragment 
+"about_fragment_title"="關於";
+"about_fragment_content"="掃描二維碼，您的朋友也可下載";
+"about_fragment_app_download_url"="http://www.freetis.com/APP/Mobile";
+"about_fragment_tab_log"="軟件日誌";
+"about_fragment_declaraction"="特別聲明";
+
+// SettingFragment 
+"setting_fragment_title"="設置";
+"setting_fragment_version"="當前版本";
+
+// SleepStatuFragment 
+"sleep_statu_fragment_title"="睡眠狀態";
+"sleep_statu_fragment_onbed"="在床";
+"sleep_statu_fragment_offbed"="離床";
+
+// item_sleep_statu 
+"item_sleep_statu_hour"="小時";
+"item_sleep_statu_min"="分鐘";
+"item_sleep_statu_second"="秒";
+
+// DetailFragment 
+"detail_fragment_disconnect"="未連接";
+"detail_fragment_connect"="已連接";
+"detail_fragment_sleep_duration"="睡眠時長";
+"detail_fragment_hour"="小時";
+"detail_fragment_snore_duration"="打鼾時長";
+"detail_fragment_minute"="分鐘";
+"detail_fragment_yesterday"="昨天";
+"detail_fragment_hr"="心率";
+"detail_fragment_max"="最高";
+"detail_fragment_avg"="平均";
+"detail_fragment_min"="最低";
+"detail_fragment_breath"="呼吸率";
+"detail_fragment_snore"="打鼾";
+"detail_fragment_Temperature"="溫度";
+"detail_fragment_Humidness"="濕度";
+"detail_fragment_cmov"="體動";
+"detail_fragment_Movement"="體動";
+"detail_fragment_time"="次";
+"detail_fragment_Light"="光照";
+"detail_fragment_Noise"="噪音";
+"detail_fragment_total"="總計";
+"detail_fragment_sleep_statu"="睡眠狀態";
+"detail_fragment_ss"="慢波睡眠";
+"detail_fragment_golden_sleep"="黃金睡眠";
+"detail_fragment_rem"="快速眼動期";
+"detail_fragment_tab_realtime"="實時數據";
+"detail_fragment_tab_lab"="Lab";
+"detail_fragment_chart_no_data"="無數據";
+"detail_fragment_sleep_statu_none"="無人";
+"detail_fragment_sleep_statu_awake"="清醒";
+"detail_fragment_sleep_statu_sleep"="睡眠";
+"detail_fragment_sleep_content"="優秀的睡眠質量";
+"detail_fragment_sleep_content_2"="比較好的睡眠質量";
+"detail_fragment_sleep_content_3"="有點糟糕的睡眠質量";
+"detail_fragment_sleep_content_4"="糟糕的的睡眠質量";
+"detail_fragment_last_update_hint"="上次更新時間：";
+
+// Scan2GDeviceActivity 
+"scan_2g_device_activity_title"="二維碼掃描";
+"scan_2g_device_activity_content"="手動輸入產品編號";
+
+// ScanQRCodeActivity 
+"scan_qr_device_activity_title"="二維碼掃描";
+
+// BluetoothInitializationFragment 
+"bluetooth_initialization_fragment_content"="正在初始化";
+
+//CanYouConcernDeviceFragment
+"can_you_concern_device_fragment_content"="是否關註此設備:";
+"can_you_concern_device_fragment_cancel"="取消";
+"can_you_concern_device_fragment_yes"="確定";
+
+//ReplaceHeightFragment
+"replace_height_fragment_yes"="確定";
+
+//ReplaceWeightFragment
+"replace_weight_fragment_yes"="確定";
+
+//SelectDateFragment
+"select_date_fragment_yes"="確定";
+
+// DateUtil 
+"dateutil_week_1"="星期壹";
+"dateutil_week_2"="星期二";
+"dateutil_week_3"="星期三";
+"dateutil_week_4"="星期四";
+"dateutil_week_5"="星期五";
+"dateutil_week_6"="星期六";
+"dateutil_week_7"="星期日";
+
+// 掃描二維碼 
+"scan_tips"="將二維碼圖片對準掃描框即可自動掃描";
+
+// 網絡錯誤編碼 
+"net_12001"="拒絕訪問。需要用戶名和令牌";
+"net_12002"="首先妳需要登錄";
+"net_12003"="該賬號在其他設備上已登錄,請重新登錄";
+"net_12004"="內部錯誤";
+"net_12005"="請輸入用戶名";
+"net_12006"="請輸入密碼";
+"net_12007"="無效的用戶名";
+"net_12008"="無效密碼";
+"net_12009"="用戶名不存在。";
+"net_12010"="密碼錯誤,請再試壹次";
+"net_12011"="密碼錯誤,請再試壹次";
+"net_12012"="內部錯誤";
+"net_12013"="內部錯誤";
+"net_12014"="內部錯誤";
+"net_12015"="內部錯誤";
+"net_12016"="內部錯誤";
+"net_12020"="請輸入用戶名";
+"net_12021"="請輸入密碼";
+"net_12022"="用戶名太短";
+"net_12023"="密碼太短";
+"net_12024"="用戶名已存在,請更換壹個名稱";
+"net_12025"="內部錯誤";
+"net_12030"="請輸入新舊密碼";
+"net_12031"="新舊密碼是相同的";
+"net_12032"="無效的密碼太短";
+"net_12033"="用戶名或舊密碼是錯誤的";
+"net_12034"="內部錯誤";
+"net_12036"="獲取個人信息失敗";
+"net_12037"="檢查個人信息失敗";
+"net_12038"="更新個人信息失敗";
+"net_12040"="妳已綁定這個設備";
+"net_12041"="該設備已被綁定";
+"net_12042"="內部錯誤";
+"net_12043"="內部錯誤";
+"net_12044"="內部錯誤";
+"net_12045"="缺少設備ID";
+"net_12046"="參數錯誤";
+"net_12047"="內部錯誤";
+"net_12048"="該設備不能被解綁";
+"net_12049"="該設備已被綁定";
+"net_12050"="內部錯誤";
+"net_12060"="更改頭像失敗";
+"net_12070"="內部錯誤";
+"net_12071"="內部錯誤";
+"net_12080"="不能分享這個設備";
+"net_12081"="不能把自己的設備分享給自己";
+"net_12082"="內部錯誤";
+"net_12090"="查詢消息失敗";
+"net_12091"="更新消息失敗";
+"net_12092"="添加消息失敗";
+"net_12093"="刪除消息失敗";
+"net_12100"="缺少日期參數";
+"net_12101"="不正確的設備ID";
+"net_12110"="實時數據獲取失敗";
+
+// 網絡請求提示 
+"net_loading"="正在加載中";
+"net_time_out"="請求超時,請重試";
+"net_wrong_prompt"="網絡錯誤";
+
+//下拉刷新
+"xlistview_header_hint_normal"="下拉刷新";
+"xlistview_header_hint_ready"="松開刷新數據";
+"xlistview_header_hint_loading"="正在加載...";
+"xlistview_header_last_time"="上次更新時間：";
+"xlistview_header_hint_today"="今天";
+"xlistview_footer_hint_normal"="查看更多";
+"xlistview_footer_hint_ready"="松開載入更多";
+"xlistview_footer_hint_pull-up"="上拉加載更多";
+"xlistview_footer_hint_Let_go"="松手立即加載更多數據";
+"xlistview_footer_hint_loading"="正在加載中...";
+
+
+//实时GPRS
+"wifi_real_time_fragment_statu"="無數據";
+"wifi_real_time_fragment_statu_2"="未知";
+"wifi_real_time_fragment_statu_3"="下線";
+"wifi_real_time_fragment_statu_4"="無人";
+"wifi_real_time_fragment_statu_5"="在床";
+"wifi_real_time_fragment_statu_6"="傳感器\n失聯";
+"wifi_real_time_fragment_statu_7"="電量錯誤";
+"wifi_real_time_fragment_statu_8"="已入睡";
+
+"detail_fragment_wifi_device_warm"="中繼器已失聯";
+"detail_fragment_wifi_device_warm_2"="傳感器已失聯";
+
+
+"wifi_device_ap_setup_fragment_title"="正在搜索設備";
+"wifi_device_ap_setup_fragment_warm"="連接不上目標設備,請稍後重試";
+"wifi_device_ap_setup_fragment_warm_2"="連接失敗，請重試";
+"wifi_device_ap_setup_fragment_warm_5"="配置出現錯誤，可能由於密碼輸入錯誤等原因，請重試";
+"wifi_device_ap_setup_fragment_warm_6"="重啟出現錯誤，請重試";
+"wifi_device_ap_setup_fragment_content"="正在連接設備";
+"wifi_device_ap_setup_fragment_content_3"="正在設置設備";
+"wifi_device_ap_setup_fragment_content_4"="正在重啟設備";
+"wifi_device_ap_setup_fragment_content_5"="正在重連網絡";
+
+
+"add_device_fragment_warm"="請打開Wifi";
+"add_device_fragment_warm_2"="請先連接上WiFi";
+"add_device_fragment_warm_3"="該產品不支持5G網絡.";
+"add_device_fragment_content_5"="設備重設Wifi";
+
+"add_wifi_device_fragment_title"="添加WiFi設備";
+"add_wifi_device_fragment_content"="請按壹下中繼器上的配置按鈕，\n使設備進入設置狀態。";
+"add_wifi_device_fragment_content_2"="如果沒有密碼，可以不填";
+"add_wifi_device_fragment_hint"="請輸入該Wifi密碼";
+"add_wifi_device_fragment_yes_1"="下壹步";
+"add_wifi_device_fragment_content_3"="點擊連接設備，選擇要連接RAK開頭的設備。";
+"add_wifi_device_fragment_content_4"="處理過程中，手機將多次斷開並重新連接網絡。";
+"add_wifi_device_fragment_hint_2"="請點擊這裏來連接設備";
+"add_wifi_device_fragment_hint_3"="請給妳的設備命個名吧";
+"add_wifi_device_fragment_yes"="確定";
+"add_wifi_device_fragment_warm"="請先連接設備";
+"add_wifi_device_fragment_warm_2"="操作已被取消";

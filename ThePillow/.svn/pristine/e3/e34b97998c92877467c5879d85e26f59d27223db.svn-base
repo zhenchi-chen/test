@@ -1,0 +1,361 @@
+/* 
+  Localizable.strings
+  Kids
+
+  Created by 陈镇池 on 16/9/19.
+  Copyright © 2016年 chen_zhenchi_lehu. All rights reserved.
+*/
+
+
+"app_name"="Golden Sleep";
+
+// utility 
+"device_default_name"="Unnamed";
+"device_unknown_name"="Unknown Device";
+"qr_useless_content"="Invalid qr code";
+"YES"="YES";
+"NO"="NO";
+"Developer"="Developer";
+
+// NoDeviceFragment 
+"no_device_fragment_title"="Add Device";
+"no_device_fragment_add_hint"="Haven\'t device, go ahead and add a device to yourself!";
+"no_device_fragment_add_hint_2"="After add device can view your sleep data.";
+"no_device_fragment_next"="Next";
+
+// LoginFragment 
+"login_fragment_title"="Login";
+"login_fragment_welcome"="Welcome Back";
+"login_fragment_content"="Continue to use after login";
+"login_fragment_hint"="Email or Mobile number";
+"login_fragment_hint_2"="Password";
+"login_fragment_content_2"="Login";
+"login_fragment_content_3"="Register";
+"login_fragment_warn"="Please enter your account name";
+"login_fragment_warn_2"="Please enter your password";
+"login_fragment_warn_3"="Account name format is not correct";
+"login_fragment_warn_4"="The password may not be less than 6 letters";
+"login_fragment_warn_5" = "User name or password is wrong";
+"login_fragment_warn_6" = "Please input again";
+
+// LabFragment 
+"lab_fragment_title"="Kids Lab";
+"lab_fragment_content"="Heart rate\nvariability";
+"lab_fragment_content_2"="Resistance\nindex";
+"lab_fragment_content_3"="Memory\nindex";
+"lab_fragment_content_4"="Apnea";
+
+// AddDeviceFragment 
+"add_device_fragment_title"="Add";
+"add_device_fragment_content"="Add my device";
+"add_device_fragment_content_2"="Please select your device version";
+"add_device_fragment_content_3"="Add device for family and friends";
+"add_device_fragment_content_4"="Please scan the other device qr code";
+
+// Add2GDeviceFragment 
+"add_2g_device_fragment_title"="Add GPRS device";
+"add_2g_device_fragment_content"="Enter product serial number\nto find the device";
+"add_2g_device_fragment_content_2"="On the back of the product,\nplease find the product number to search";
+"add_2g_device_fragment_sn_hint"="Product number";
+"add_2g_device_fragment_name_hint"="Device nickname";
+"add_2g_device_fragment_button_yes"="Confirm";
+"add_2g_device_fragment_warn"="Product coding format is wrong, please input again";
+
+// AddBluetoothDeviceFragment 
+"add_bluetooth_device_fragment_title"="Add BLE devices";
+"add_bluetooth_device_fragment_content"="Select your bluetooth device";
+"add_bluetooth_device_fragment_content_2"="Please click on the \"search bluetooth device\"\nto choose need to bind to your bluetooth device";
+"add_bluetooth_device_fragment_device_mac_hint"="Search bluetooth device";
+"add_bluetooth_device_fragment_device_name"="Device nickname";
+"add_bluetooth_device_fragment_device_Initializes"="Empty device";
+"add_bluetooth_device_fragment_yes"="Confirm";
+"add_bluetooth_device_fragment_warn"="Please search your bluetooth devices ";
+"add_bluetooth_device_fragment_warn_2"="Bluetooth initialization has been cancelled";
+
+// AddWifiDeviceFragment 
+"add_wifi_device_fragment_title"="Add WiFi devices ";
+"add_wifi_device_fragment_content"="Please click on the configure button on the repeater to enter setup mode";
+"add_wifi_device_fragment_content_2"="Note: Can only add one device at a time";
+"add_wifi_device_fragment_hint"="WiFi password";
+"add_wifi_device_fragment_hint_2"="Connect your device";
+"add_wifi_device_fragment_hint_3"="Device nickname";
+"add_wifi_device_fragment_yes"="Confirm";
+"add_wifi_device_fragment_warm"="Please open WiFi  ";
+"add_wifi_device_fragment_warm_2"="Please connect the WiFi";
+"add_wifi_device_fragment_warm_3"="Please enter the WiFi password";
+"add_wifi_device_fragment_warm_4"="Please connect device";
+
+// BluetoothRealTimeFragment 
+"bluetooth_real_time_fragment_title"="Real-time";
+"bluetooth_real_time_fragment_default_status"="unknown";
+"bluetooth_real_time_fragment_status_label"="State";
+"bluetooth_real_time_fragment_hr_label"="Heart rate";
+"bluetooth_real_time_fragment_breath_label"="Breathing rate";
+"bluetooth_real_time_fragment_move_label"="Moving";
+"bluetooth_real_time_fragment_no_one"="No one";
+"bluetooth_real_time_fragment_on_bed"="In bed";
+"bluetooth_real_time_fragment_chart_no_data"="No data";
+
+// bluetooth utilities 
+"bluetooth_version_obsolete"="System version must be above 4.3 to support BLE";
+"bluetooth_no_ble"="This phone does not support BLE bluetooth";
+"bluetooth_no_bluetooth"="This phone does not support bluetooth";
+"bluetooth_status_find"="Searching for Bluetooth device";
+"bluetooth_connect"="Connecting device...";
+"bluetooth_synchro"="Synchronizing data...";
+
+// DeviceListFragment 
+"device_list_fragment_title"="Device list";
+
+// FindBluetoothDeviceFragment 
+"find_bluetooth_device_fragment_title"="Search";
+"find_bluetooth_device_fragment_refresh"="Refresh";
+"find_bluetooth_device_fragment_stop_refresh"="Stop";
+
+// HowToUseFragment 
+"how_to_use_fragment_title"="How to use";
+"how_to_use_fragment_tab_bluetooth"="Bluetooth version";
+"how_to_use_fragment_tab_gpre_wifi"="GPRS and WiFi version";
+
+// PersonalFragment 
+"personal_fragment_title"="Me";
+"personal_fragment_none"="Not filled";
+"personal_fragment_sex"="Gender";
+"personal_fragment_birthday"="Birthday";
+"personal_fragment_height"="Height";
+"personal_fragment_weight"="Weight";
+"personal_fragment_address"="Region";
+"personal_fragment_logout"="Logout";
+"personal_fragment_man"="Male";
+"personal_fragment_woman"="Female";
+
+// QuestionFragment 
+"question_fragment_title"="Common problems";
+
+// RegisterFragment 
+"register_fragment_title"="Register";
+"register_fragment_account_hint"="Your email or phone number";
+"register_fragment_password_hint"="Create a password";
+"register_fragment_password_again_hint"="Confirm password";
+"register_fragment_register"="Register";
+"register_fragment_warn"="Please enter your email or phone number";
+"register_fragment_warn_2"="Please create a password";
+"register_fragment_warn_3"="Account name format is not correct";
+"register_fragment_warn_4"="The password may not be less than 6 letters";
+"register_fragment_warn_5"="Please enter the password again";
+"register_fragment_warn_6"="Enter the password again with the original password is not the same";
+"register_fragment_succeed"="Registered successfully ";
+
+// AboutFragment 
+"about_fragment_title"="About";
+"about_fragment_content"="Scanning the qr code, your friends can also download";
+"about_fragment_app_download_url"="http://www.freetis.com/APP/Mobile";
+"about_fragment_tab_log"="Software log";
+"about_fragment_declaraction"="Special Announcement";
+
+// SettingFragment 
+"setting_fragment_title"="Settings";
+"setting_fragment_version"="Current version";
+
+// SleepStatuFragment 
+"sleep_statu_fragment_title"="Sleep state";
+"sleep_statu_fragment_onbed"="In bed";
+"sleep_statu_fragment_offbed"="Off bed";
+
+// item_sleep_statu 
+"item_sleep_statu_hour"="h";
+"item_sleep_statu_min"="min";
+"item_sleep_statu_second"="s";
+
+// DetailFragment 
+"detail_fragment_disconnect"="Not connected ";
+"detail_fragment_connect"="Connected";
+"detail_fragment_sleep_duration"="Sleep";
+"detail_fragment_hour"="hours";
+"detail_fragment_snore_duration"="Snore";
+"detail_fragment_minute"="mins";
+"detail_fragment_yesterday"="Yesterday";
+"detail_fragment_hr"="Heart rate";
+"detail_fragment_max"="Max";
+"detail_fragment_avg"="Average";
+"detail_fragment_min"="Min";
+"detail_fragment_breath"="Breathing rate";
+"detail_fragment_snore"="Snore";
+"detail_fragment_total"="Total";
+"detail_fragment_cmov"="Movement";
+"detail_fragment_Movement"="Movement";
+"detail_fragment_time"="Times";
+"detail_fragment_Temperature"="Temperature";
+"detail_fragment_Humidness"="Humidness";
+"detail_fragment_Light"="Light";
+"detail_fragment_Noise"="Noise";
+"detail_fragment_sleep_statu"="Sleep state";
+"detail_fragment_ss"="Slow-wave sleep";
+"detail_fragment_golden_sleep"="Gold sleep";
+"detail_fragment_rem"="Rapid eye movement";
+"detail_fragment_tab_realtime"="Real-time data";
+"detail_fragment_tab_lab"="Lab";
+"detail_fragment_chart_no_data"="No data";
+"detail_fragment_sleep_statu_none"="No one";
+"detail_fragment_sleep_statu_awake"="Awake";
+"detail_fragment_sleep_statu_sleep"="Asleep";
+"detail_fragment_sleep_content"="Good sleep quality";
+"detail_fragment_sleep_content_2"="Better sleep quality";
+"detail_fragment_sleep_content_3"="Worser sleep quality";
+"detail_fragment_sleep_content_4"="Poor sleep quality";
+"detail_fragment_last_update_hint"="last updated time:";
+
+// Scan2GDeviceActivity 
+"scan_2g_device_activity_title"="QR Code Scan";
+"scan_2g_device_activity_content"="Manually enter the product serial number";
+
+// ScanQRCodeActivity 
+"scan_qr_device_activity_title"="QR Code Scan";
+
+// BluetoothInitializationFragment 
+"bluetooth_initialization_fragment_content"="Initializing";
+
+// CanYouConcernDeviceFragment 
+"can_you_concern_device_fragment_content"="Whether to focus on the device:";
+"can_you_concern_device_fragment_cancel"="Cancel";
+"can_you_concern_device_fragment_yes"="Confirm";
+
+// ReplaceHeightFragment 
+"replace_height_fragment_yes"="Confirm";
+
+// ReplaceWeightFragment 
+"replace_weight_fragment_yes"="Confirm";
+
+// SelectDateFragment 
+"select_date_fragment_yes"="Confirm";
+
+// DateUtil 
+"dateutil_week_1"="Mon";
+"dateutil_week_2"="Tues";
+"dateutil_week_3"="Wed";
+"dateutil_week_4"="Thur";
+"dateutil_week_5"="Fri";
+"dateutil_week_6"="Sat";
+"dateutil_week_7"="Sun";
+
+// scan qr code 
+"scan_tips"="Aim the qr code image scanning\nframe can automatically scan";
+
+// network error code 
+"net_12001"="Access denied. Need username and token";
+"net_12002"="The first thing you need to log in to";
+"net_12003"="This account is logged in on other devices, please login again";
+"net_12004"="Internal error";
+"net_12005"="Please enter your user name";
+"net_12006"="Please enter a password";
+"net_12007"="Invalid username";
+"net_12008"="Invalid password";
+"net_12009"="User name does not exist.";
+"net_12010"="Wrong password, please try again";
+"net_12011"="Wrong password, please try again";
+"net_12012"="Internal error";
+"net_12013"="Internal error";
+"net_12014"="Internal error";
+"net_12015"="Internal error";
+"net_12016"="Internal error";
+"net_12020"="Please enter your user name";
+"net_12021"="Please enter a password";
+"net_12022"="User name too short";
+"net_12023"="Password too short";
+"net_12024"="User name already exists, please change a name";
+"net_12025"="Internal error";
+"net_12030"="Please enter the old and the new password";
+"net_12031"="The old and new passwords are the same";
+"net_12032"="Invalid password too short";
+"net_12033"="User name or old password is wrong";
+"net_12034"="Internal error";
+"net_12036"="Failed to get personal information";
+"net_12037"="Check personal information failure";
+"net_12038"="Update personal information failure";
+"net_12040"="You have bound the equipment";
+"net_12041"="This equipment has been binding";
+"net_12042"="Internal error";
+"net_12043"="Internal error";
+"net_12044"="Internal error";
+"net_12045"="The lack of device ID";
+"net_12046"="Parameter error";
+"net_12047"="Internal error";
+"net_12048"="The device cannot be unbundling";
+"net_12049"="This equipment has been binding";
+"net_12050"="Internal error";
+"net_12060"="Change face failure";
+"net_12070"="Internal error";
+"net_12071"="Internal error";
+"net_12080"="Can\'t share the equipment";
+"net_12081"="Can\'t share your own equipment to";
+"net_12082"="Internal error";
+"net_12090"="Query message failure";
+"net_12091"="Update failure";
+"net_12092"="Add message failure";
+"net_12093"="Delete messages failure";
+"net_12100"="The lack of date parameter";
+"net_12101"="Incorrect device ID";
+"net_12110"="Real-time data acquisition failure";
+
+// 网络请求提示 
+"net_loading"="Loading";
+"net_time_out"="Request timeout, please try again";
+"net_wrong_prompt"="Network error";
+
+//下拉刷新
+"xlistview_header_hint_normal"="Pull to refresh";
+"xlistview_header_hint_ready"="Release to refresh...";
+"xlistview_header_hint_loading"="Loading...";
+"xlistview_header_last_time"="last update time：";
+"xlistview_header_hint_today"="Today";
+"xlistview_footer_hint_normal"="Load more";
+"xlistview_footer_hint_ready"="Release to load more";
+"xlistview_footer_hint_pull-up"="Pull-up can load more data";
+"xlistview_footer_hint_Let_go"="Let go immediately to load more data";
+"xlistview_footer_hint_loading"="loading data...";
+
+// 实时GPRS
+"wifi_real_time_fragment_statu"="No data";
+"wifi_real_time_fragment_statu_2"="Unknown";
+"wifi_real_time_fragment_statu_3"="Offline";
+"wifi_real_time_fragment_statu_4"="Idle";
+"wifi_real_time_fragment_statu_5"="Wake";
+"wifi_real_time_fragment_statu_6"="Sensor\noffline";
+"wifi_real_time_fragment_statu_7"="Sensor\nPower Error";
+"wifi_real_time_fragment_statu_8"="Sleep";
+
+
+"detail_fragment_wifi_device_warm"="Repeater offline";
+"detail_fragment_wifi_device_warm_2"="Sensor offline";
+
+//添加WiFi
+"wifi_device_ap_setup_fragment_title"="Search device";
+"wifi_device_ap_setup_fragment_warm"="Unable to connect the target device, please try again";
+"wifi_device_ap_setup_fragment_warm_2"="Connection failed, please try again";
+"wifi_device_ap_setup_fragment_warm_5"="Setup error, may be the password input error, please try again";
+"wifi_device_ap_setup_fragment_warm_6"="Restart error, please try again";
+"wifi_device_ap_setup_fragment_content"="Connecting device";
+"wifi_device_ap_setup_fragment_content_3"="Setuping device";
+"wifi_device_ap_setup_fragment_content_4"="Restarting device";
+"wifi_device_ap_setup_fragment_content_5"="Reconnecting";
+
+
+
+"add_device_fragment_warm"="Please open WiFi  ";
+"add_device_fragment_warm_2"="Please connect the WiFi";
+"add_device_fragment_warm_3"="This product does not support 5G network.";
+"add_device_fragment_content_5"="Device reset Wifi";
+
+"add_wifi_device_fragment_title"="Add WiFi devices ";
+"add_wifi_device_fragment_content"="Please click on the configure button on the repeater to enter setup mode";
+"add_wifi_device_fragment_content_2"="If no password, here can not fill";
+"add_wifi_device_fragment_hint"="WiFi password";
+"add_wifi_device_fragment_yes_1"="Next";
+"add_wifi_device_fragment_content_3"="Select the device connection that begins with RAK";
+"add_wifi_device_fragment_content_4"="In the processing, the phone will disconnect and reconnect the network many times.";
+"add_wifi_device_fragment_hint_2"="Connect your device";
+"add_wifi_device_fragment_hint_3"="Device nickname";
+"add_wifi_device_fragment_yes"="Confirm";
+"add_wifi_device_fragment_warm"="Please connect device";
+"add_wifi_device_fragment_warm_2"="Operation has been cancelled";
+

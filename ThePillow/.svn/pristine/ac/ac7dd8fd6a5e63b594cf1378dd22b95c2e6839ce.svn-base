@@ -1,0 +1,385 @@
+ //
+//  UpdateDeviceData.m
+//  ThePillow
+//
+//  Created by 陈镇池 on 2017/2/7.
+//  Copyright © 2017年 chen_zhenchi_lehu. All rights reserved.
+//
+
+#import "UpdateDeviceData.h"
+
+@implementation UpdateDeviceData
+
++ (UpdateDeviceData *)sharedManager
+{
+    static UpdateDeviceData *sharedUpdateDeviceDataManagerInstance = nil;
+    static dispatch_once_t predicate;
+    dispatch_once(&predicate, ^{
+        sharedUpdateDeviceDataManagerInstance = [[self alloc] init];
+    });
+    
+    return sharedUpdateDeviceDataManagerInstance;
+}
+
+
+
+//修改单条数据
+-(void)setUpdateDataDeviceModel:(DeviceModel *)deviceModel andtype:(NSInteger)number andChangeName:(NSString *)name andChangeDetail:(NSString *)detail {
+    if (deviceModel == nil) {
+        deviceModel = [self getReadData];
+        if (deviceModel == nil) {
+            return;
+        }
+    }
+    NSLog(@"修改did = %@",deviceModel.did);
+    switch (number) {
+        case DidInfo_Set:{
+            DidInfoModel *didInfoModel = [DidInfoModel objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:deviceModel.didInfo]];
+            if ([name isEqualToString:@"deviceName"]) {
+                didInfoModel.deviceName = detail;
+            }else if ([name isEqualToString:@"didInfo"]) {
+                NSDictionary *didInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:detail];
+                didInfoModel.isHome = [didInfoDicTemp objectForKey:@"isHome"];
+                didInfoModel.hardwareVersion = [didInfoDicTemp objectForKey:@"hardwareVersion"];
+                didInfoModel.deviceName = [didInfoDicTemp objectForKey:@"deviceName"];
+                didInfoModel.softwareVersion = [didInfoDicTemp objectForKey:@"softwareVersion"];
+                didInfoModel.type = [didInfoDicTemp objectForKey:@"type"];
+            }
+            NSDictionary *didInfoDic = [didInfoModel keyValues];
+            deviceModel.didInfo = [GWNSStringUtil convertToJSONString:didInfoDic];
+            NSLog(@"修改didInfo = %@",deviceModel.didInfo);
+            [[[DeviceListTool alloc]init]updateDataDevice:deviceModel.did andChangeName:@"didInfo" andChange:deviceModel.didInfo];
+        }
+            break;
+        case Snore_Set:
+            deviceModel.snore = detail;
+            NSLog(@"修改snore = %@",deviceModel.snore);
+            [[[DeviceListTool alloc]init]updateDataDevice:deviceModel.did andChangeName:@"snore" andChange:deviceModel.snore];
+            [GWNotification pushHandle:nil withName:@"更新设备信息"];
+            break;
+        case Clock_Set:{
+            Clock *clock = [Clock objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:deviceModel.clock]];
+            if ([name isEqualToString:@"clockMode"]) {
+                clock.clockMode = [GWNSStringUtil dictionaryToJsonString:detail];
+            }else if ([name isEqualToString:@"clockTime"]) {
+                NSDictionary *clockTimeDicTemp = [GWNSStringUtil dictionaryToJsonString:detail];
+                clock.clockTime = [clockTimeDicTemp objectForKey:@"clockTime"];
+                clock.isValid = [clockTimeDicTemp objectForKey:@"isValid"];
+            }else if ([name isEqualToString:@"clock"]) {
+                NSDictionary *clockDicTemp = [GWNSStringUtil dictionaryToJsonString:detail];
+                clock.clockMode =  [clockDicTemp objectForKey:@"clockMode"];
+                clock.clockTime = [clockDicTemp objectForKey:@"clockTime"];
+                clock.isValid = [clockDicTemp objectForKey:@"isValid"];
+            }
+            NSDictionary *clockDic = [clock keyValues];
+            deviceModel.clock = [GWNSStringUtil convertToJSONString:clockDic];
+            NSLog(@"修改clock = %@",deviceModel.clock);
+            [[[DeviceListTool alloc]init]updateDataDevice:deviceModel.did andChangeName:@"clock" andChange:deviceModel.clock];
+            [GWNotification pushHandle:nil withName:@"更新设备信息"];
+        }
+            break;
+        case UserInfo_Set:{
+            UserInfoModel *userInfoModel = [UserInfoModel objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:deviceModel.userInfo]];
+            if ([name isEqualToString:@"age"]) {
+                userInfoModel.age = detail;
+            }else if ([name isEqualToString:@"gender"]) {
+                userInfoModel.gender = detail;
+            }else if ([name isEqualToString:@"weight"]) {
+                userInfoModel.weight = detail;
+            }else if ([name isEqualToString:@"height"]) {
+                userInfoModel.height = detail;
+            }else if ([name isEqualToString:@"portrait"]) {
+                userInfoModel.portrait = detail;
+            }else if ([name isEqualToString:@"userInfo"]) {
+                NSDictionary *userInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:detail];
+                userInfoModel.age = [userInfoDicTemp objectForKey:@"age"];
+                userInfoModel.gender = [userInfoDicTemp objectForKey:@"gender"];
+                userInfoModel.weight = [userInfoDicTemp objectForKey:@"weight"];
+                userInfoModel.height = [userInfoDicTemp objectForKey:@"height"];
+                userInfoModel.portrait = [userInfoDicTemp objectForKey:@"portrait"];
+            }
+            NSDictionary *userInfoDic = [userInfoModel keyValues];
+            deviceModel.userInfo = [GWNSStringUtil convertToJSONString:userInfoDic];
+            NSLog(@"修改userInfo = %@",deviceModel.userInfo);
+            [[[DeviceListTool alloc]init]updateDataDevice:deviceModel.did andChangeName:@"userInfo" andChange:deviceModel.userInfo];
+        }
+            break;
+        default:
+            break;
+    }
+    
+    
+}
+
+//设为首页
+-(void)setUpdateDataDevice:(DeviceModel *)deviceModel {
+    if (deviceModel == nil) {
+        deviceModel = [self getReadData];
+        if (deviceModel == nil) {
+            return;
+        }
+    }
+    NSMutableArray *saveArr = [NSMutableArray array];
+    saveArr = [[[[DeviceListTool alloc]init] queryAllDeviceListShowModels] mutableCopy];
+    
+    for (int i=0; i<saveArr.count; i++) {
+        DeviceModel *tempModel = [saveArr objectAtIndex:i];
+        if ([deviceModel.did isEqualToString:tempModel.did]) {
+            
+            NSMutableDictionary *savedic = [NSMutableDictionary dictionary];
+            [savedic setValue:[NSString stringWithFormat:@"%d",i] forKey:@"isDevice"];
+            [[ListTheCacheClass sharedManager]saveData:savedic];
+            
+            DidInfoModel *didInfoModel = [DidInfoModel objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:deviceModel.didInfo]];
+            didInfoModel.isHome = @"1";
+            NSDictionary *didInfoDic = [didInfoModel keyValues];
+            deviceModel.didInfo = [GWNSStringUtil convertToJSONString:didInfoDic];
+            NSLog(@"设为首页的didInfo = %@",deviceModel.didInfo);
+            [[[DeviceListTool alloc]init]updateDataDevice:deviceModel.did andChangeName:@"didInfo" andChange:deviceModel.didInfo];
+        }else{
+            DidInfoModel *didInfoModelTemp = [DidInfoModel objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:tempModel.didInfo]];
+            didInfoModelTemp.isHome = @"0";
+            NSDictionary *didInfoDic = [didInfoModelTemp keyValues];
+            tempModel.didInfo = [GWNSStringUtil convertToJSONString:didInfoDic];
+            NSLog(@"修改首页的didInfo = %@",tempModel.didInfo);
+            [[[DeviceListTool alloc]init]updateDataDevice:tempModel.did andChangeName:@"didInfo" andChange:tempModel.didInfo];
+        }
+    }
+    
+    
+}
+
+//是否需要同步蓝牙
+- (BOOL)isSetBluetoothSensorDevice:(DeviceModel *)deviceModel {
+    if (deviceModel == nil) {
+         deviceModel = [self getReadData];
+        if (deviceModel == nil) {
+            return YES;
+        }
+    }
+    ConfigModel *snore = [[ConfigModel alloc]init];
+    NSDictionary *snoreDicTemp = [GWNSStringUtil dictionaryToJsonString:deviceModel.snore];
+    snore.isValid = [snoreDicTemp objectForKey:@"isValid"];
+    
+    Clock *clock = [Clock objectWithKeyValues:[GWNSStringUtil dictionaryToJsonString:deviceModel.clock]];
+    
+    ConfigModel *clockMode = [ConfigModel objectWithKeyValues:clock.clockMode];
+    
+    if ([snore.isValid intValue] == 0) {
+        return YES;
+    }else if ([clock.isValid intValue] == 0) {
+        return YES;
+    }else if ([clockMode.isValid intValue] == 0) {
+        return YES;
+    }else {
+        return NO;
+    }
+}
+
+//读取数据
+- (DeviceModel *)getReadData{
+    
+    NSDictionary *dic = [[ListTheCacheClass sharedManager]readData];
+    NSInteger isDevice = [[dic valueForKey:@"isDevice"] integerValue];
+    NSMutableArray *saveArr = [NSMutableArray array];
+    saveArr = [[[[DeviceListTool alloc]init] queryAllDeviceListShowModels] copy];
+    if (saveArr.count==0) {
+        return nil;
+    }
+    DeviceModel *deviceModel = [[DeviceModel alloc]init];
+    if (isDevice>= saveArr.count) {
+        //设置第一个为首页
+        isDevice = 0;
+        deviceModel = [saveArr objectAtIndex:isDevice];
+        [self setUpdateDataDevice:deviceModel];
+        
+    }else {
+        deviceModel = [saveArr objectAtIndex:isDevice];
+    }
+    
+    return deviceModel;
+}
+
+#pragma mark 添加后台设备列表中本地没有的设备
+- (void)addDeviceData:(NSArray *)array andDeviceId:(NSString *)device{
+    NSMutableArray *tempArray = [NSMutableArray array];
+    for (int i = 0; i<array.count; i++) {
+        NSDictionary *dic = [array objectAtIndex:i];
+        NSDictionary *didInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:[[dic objectForKey:@"didInfo"] objectForKey:@"S"]];
+        NSString *type = [didInfoDicTemp objectForKey:@"type"];
+        //测试屏蔽
+//        if ([type isEqualToString:@"vble"]) {
+            [tempArray addObject:dic];
+//        }
+    }
+    //解析设备
+    NSMutableArray *listArr = [self addDeviceData:tempArray];
+    //本地设备
+    NSMutableArray *saveArr = [NSMutableArray array];
+    saveArr = [[[[DeviceListTool alloc]init] queryAllDeviceListShowModels] mutableCopy];
+    
+    for (int i = 0; i<listArr.count; i++) {
+        DeviceModel *deviceModel1 = [listArr objectAtIndex:i];
+        for (int j=0; j<saveArr.count; j++) {
+            DeviceModel *deviceModel2 = [saveArr objectAtIndex:j];
+            if ([deviceModel2.did isEqualToString:deviceModel1.did ] && [deviceModel2.rule isEqualToString:@"admin"]) {
+                listArr[i] = deviceModel2;
+                break;
+            }
+        }
+    }
+    
+    //删除本地设置
+    [[[DeviceListTool alloc]init]deleteAllData];
+    //写入本地
+    [[[DeviceListTool alloc]init] insertDeviceListShowModel:listArr];
+    
+    
+    if (device != nil) {
+        NSMutableArray *saveArrayTemp = [NSMutableArray array];
+        saveArrayTemp = [[[[DeviceListTool alloc]init] queryAllDeviceListShowModels] mutableCopy];
+        for (int i=0; i<saveArrayTemp.count; i++) {
+            DeviceModel *deviceModel = [saveArrayTemp objectAtIndex:i];
+            if ([device isEqualToString:deviceModel.did]) {
+                [[UpdateDeviceData sharedManager]setUpdateDataDevice:deviceModel];
+                return;
+            }
+        }
+    }
+ 
+}
+
+#pragma mark 解析后台设备列表
+- (void)setDeviceData:(NSArray *)array  {
+    NSMutableArray *tempArray = [NSMutableArray array];
+    for (int i = 0; i<array.count; i++) {
+        NSDictionary *dic = [array objectAtIndex:i];
+        NSDictionary *didInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:[[dic objectForKey:@"didInfo"] objectForKey:@"S"]];
+        NSString *type = [didInfoDicTemp objectForKey:@"type"];
+//        if ([type isEqualToString:@"vble"]) {
+            [tempArray addObject:dic];
+//        }
+    }
+    //删除本地设置
+    [[[DeviceListTool alloc]init]deleteAllData];
+    //写入本地
+    [[[DeviceListTool alloc]init] insertDeviceListShowModel:[self addDeviceData:tempArray]];
+    [GWNotification pushHandle:nil withName:@"更换首页"];
+ 
+}
+
+//本地添加设备
+- (NSMutableArray *)addDeviceData:(NSMutableArray *)array{
+    NSMutableArray *tempArr = [NSMutableArray array];
+    for (int i = 0;i<array.count; i++) {
+        NSDictionary *devcieDicTemp = [array objectAtIndex:i];
+        NSDictionary *didInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:[[devcieDicTemp objectForKey:@"didInfo"] objectForKey:@"S"]];
+        NSDictionary *userInfoDicTemp = [GWNSStringUtil dictionaryToJsonString:[[devcieDicTemp objectForKey:@"userInfo"] objectForKey:@"S"]];
+        NSDictionary *snoreDicTemp = [GWNSStringUtil dictionaryToJsonString:[[devcieDicTemp objectForKey:@"snore"] objectForKey:@"S"]];
+        NSDictionary *clockDicTemp = [GWNSStringUtil dictionaryToJsonString:[[devcieDicTemp objectForKey:@"alarm"] objectForKey:@"S"]];
+        NSDictionary *didDicTemp = [devcieDicTemp objectForKey:@"did"];
+        NSDictionary *ruleDicTemp = [devcieDicTemp objectForKey:@"rule"];
+        //didInfo
+        DidInfoModel *didInfoModel = [[DidInfoModel alloc]init];
+        if ([didInfoDicTemp objectForKey:@"deviceName"]) {
+            didInfoModel.deviceName = [didInfoDicTemp objectForKey:@"deviceName"];
+        }else {
+            didInfoModel.deviceName = NSLocalizedString(@"device_default_name", nil);
+        }
+        didInfoModel.softwareVersion = [didInfoDicTemp objectForKey:@"softwareVersion"];
+        didInfoModel.hardwareVersion = [didInfoDicTemp objectForKey:@"hardwareVersion"];
+        didInfoModel.isHome = [didInfoDicTemp objectForKey:@"isHome"];
+        didInfoModel.type = [didInfoDicTemp objectForKey:@"type"];
+        if ([didInfoModel.isHome intValue] == 1) {
+            NSMutableDictionary *saveDic = [NSMutableDictionary dictionary];
+            [saveDic setValue:[NSString stringWithFormat:@"%d",i] forKey:@"isDevice"];
+            [[ListTheCacheClass sharedManager]saveData:saveDic];
+        }
+        
+        //userInfo
+        UserInfoModel *userInfoModel = [UserInfoModel objectWithKeyValues:userInfoDicTemp];
+        
+        //snore
+        ConfigModel *snoreModel = [[ConfigModel alloc]init];
+        NSString *snoreSelect = [NSString stringWithFormat:@"%@",[snoreDicTemp objectForKey:@"select"]];
+        NSString *snoreIsValid = [NSString stringWithFormat:@"%@",[snoreDicTemp objectForKey:@"isValid"]];
+        NSLog(@",%@,%@,%@,%@,select:%@",userInfoModel.age,userInfoModel.weight,userInfoModel.height,userInfoModel.portrait,snoreSelect);
+        if (snoreSelect.length >0) {
+            snoreModel.select = snoreSelect;
+            snoreModel.isValid = snoreIsValid;
+        }else {
+            snoreModel.select = @"1";
+            snoreModel.isValid = @"0";
+        }
+    
+        NSArray *tempCustomArr = [snoreDicTemp objectForKey:@"custom"];
+        NSMutableArray *customArray = [NSMutableArray array];
+        if (tempCustomArr.count>0) {
+            for (int i = 0; i<tempCustomArr.count; i++) {
+                NSDictionary *tempDic = (NSDictionary *)[tempCustomArr objectAtIndex:i];
+                CustomModel *custom =[CustomModel objectWithKeyValues:tempDic];
+                [customArray addObject:custom];
+            }
+        }
+        snoreModel.custom = [CustomModel keyValuesArrayWithObjectArray:[NSArray arrayWithArray:customArray]];
+        
+        //Clock
+        Clock *clock = [[Clock alloc]init];
+        ConfigModel *clockMode = [[ConfigModel alloc]init];
+        NSDictionary *clockModeDicTemp = [clockDicTemp objectForKey:@"clockMode"];
+        NSString *clockModeSelect = [NSString stringWithFormat:@"%@",[clockModeDicTemp objectForKey:@"select"]];
+        NSString *clockModeIsValid = [NSString stringWithFormat:@"%@",[clockModeDicTemp objectForKey:@"isValid"]];
+        if (clockModeSelect.length>0) {
+            clockMode.select = clockModeSelect;
+            clockMode.isValid = clockModeIsValid;
+        }else {
+            clockMode.select = @"1";
+            clockMode.isValid = @"0";
+        }
+        NSArray *tempCustomArray = [clockModeDicTemp objectForKey:@"custom"];
+        NSMutableArray *customTempArr = [NSMutableArray array];
+        if (tempCustomArray.count > 0) {
+            for (int i=0; i<tempCustomArray.count; i++) {
+                NSDictionary *tempDic = (NSDictionary *)[tempCustomArray objectAtIndex:i];
+                CustomModel *custom =[CustomModel objectWithKeyValues:tempDic];
+                [customTempArr addObject:custom];
+            }
+        }
+        clockMode.custom = [CustomModel keyValuesArrayWithObjectArray:[NSArray arrayWithArray:customTempArr]];
+        clock.clockMode = [clockMode keyValues];
+        
+        NSArray *tempClockTimeArr = [clockDicTemp objectForKey:@"clockTime"];
+        NSMutableArray *clockTimeTempArr = [NSMutableArray array];
+        for (int i=0; i<tempClockTimeArr.count; i++) {
+            ClockTimeModel *clockTimeModel = [[ClockTimeModel alloc]init];
+            NSDictionary *tempClockTimeDic = [tempClockTimeArr objectAtIndex:i];
+            clockTimeModel.week = [tempClockTimeDic objectForKey:@"week"];
+            clockTimeModel.hour = [tempClockTimeDic objectForKey:@"hour"];
+            clockTimeModel.min = [tempClockTimeDic objectForKey:@"min"];
+            clockTimeModel.times = [tempClockTimeDic objectForKey:@"times"];
+            clockTimeModel.run = [NSString stringWithFormat:@"%@",[tempClockTimeDic objectForKey:@"run"]];
+            clockTimeModel.name = [tempClockTimeDic objectForKey:@"name"];
+            clockTimeModel.ringTime = [tempClockTimeDic objectForKey:@"ringTime"];
+            [clockTimeTempArr addObject:clockTimeModel];
+        }
+        clock.clockTime = [ClockTimeModel keyValuesArrayWithObjectArray:[NSArray arrayWithArray:clockTimeTempArr]];
+        if (clockTimeTempArr.count>0) {
+             clock.isValid = [clockDicTemp objectForKey:@"isValid"];
+        }else {
+             clock.isValid = @"0";
+        }
+       
+        DeviceModel *deviceModel = [[DeviceModel alloc]init];
+        deviceModel.did = [didDicTemp objectForKey:@"S"];
+        deviceModel.rule = [ruleDicTemp objectForKey:@"S"];
+        deviceModel.didInfo = [GWNSStringUtil convertToJSONString:[didInfoModel keyValues]];
+        deviceModel.userInfo = [GWNSStringUtil convertToJSONString:[userInfoModel keyValues]];
+        deviceModel.snore = [GWNSStringUtil convertToJSONString:[snoreModel keyValues]];
+        deviceModel.clock = [GWNSStringUtil convertToJSONString:[clock keyValues]];
+        deviceModel.isServer = @"1";
+        [tempArr addObject:deviceModel];
+    }
+    return tempArr;
+}
+
+@end

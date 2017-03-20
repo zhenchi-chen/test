@@ -1,0 +1,902 @@
+//
+//  BluetoothOrder.m
+//  BluetoothSDK
+//
+//  Created by 陈镇池 on 16/9/12.
+//  Copyright © 2016年 chen_zhenchi_lehu. All rights reserved.
+//
+
+#import "BluetoothOrder.h"
+#import <CoreBluetooth/CoreBluetooth.h>
+#import "BluetoothDataModel.h"
+#import "DataUtil.h"
+#import "ConfigurationUtil.h"
+#import "BlueEnums.h"
+#import "GWXWDateUtil.h"
+
+#define number_timeout 1 //蓝牙数据返回超时时间
+
+
+
+typedef NS_ENUM(NSInteger, Order_send)
+{
+    Order_send_get_RTCTime = 1, //获取时间
+    Order_send_get_AllFlashMessage = 2, //获取地址
+    Order_send_get_SomeFlashMessage = 3, //获取一段存储器信息
+    Order_send_setup_RTCTime = 4, //设置时间
+    Order_send_get_Version = 5, //获取版本号
+    Order_send_get_Snore = 6, //设置打鼾模式
+    Order_send_get_clock = 7, //设置闹钟模式
+    Order_send_get_clockTime = 8 //设置闹钟时间
+};
+
+
+@interface BluetoothOrder ()<CBCentralManagerDelegate,CBPeripheralDelegate>
+{
+    int sendWhat;              // 记录现在和蓝牙在执行的命令
+    int peripheralTimerNum;    //寻找蓝牙的时间
+    int bluetoothRTCtimerNum;  // 第一次获取蓝牙设备RTC时间的时间
+    long begainTimes;                //起始时间戳,上次设定的时间戳
+    BOOL isCanBeReady;               //是否是定时器 第一次获取蓝牙设备RTC时间
+    long startAddress;               //首地址
+    long endAddress;                 //尾地址
+    BOOL isrealTime;                 //是否是实时请求数据
+    int obtainDataCount;             //获取回来的数据条数
+    NSString *firsDataStr;           //一段数据第一条返回的数据
+    long newTimeUpDate;              //一段数据最新一条数据返回的时间
+    int isfirsData;                  //一段数据是否是第一条数据
+
+}
+
+@property (strong,nonatomic) CBCentralManager *centralManager;   //中心设备管理器
+//@property (strong,nonatomic) NSMutableArray *peripheralsList;  //连接的外围设备
+@property (strong,nonatomic)NSMutableArray *bluetoothDataArray;  //接收到的数据
+@property (strong,nonatomic)CBCharacteristic *characteristic;    //特征
+@property (strong,nonatomic)CBPeripheral *peripherals;           //外围设备
+//@property(strong, nonatomic)NSString *peripheralEquipmentUUID; //外围设备UUID
+@property(strong, nonatomic)NSString *peripheralAddress;         //外围设备地址
+
+@property (assign,nonatomic)int isConnectedDevices;              //是否连接设备,0关闭,1打开
+//@property (assign,nonatomic)int packagesize;                   //每个分包的条数
+
+@property (strong,nonatomic)NSTimer *peripheralTimer;            //定时器,寻找自己的蓝牙设备
+@property (strong,nonatomic)NSTimer *bluetoothRTCtimer;          //定时器 第一次获取蓝牙设备RTC时间
+@property (strong,nonatomic)NSTimer *bluetoothDataTimer;         //定时器 检查一段数据返回是否超时的定时器
+@property (strong,nonatomic)BlueBlock blueBlock;
+
+@end
+
+@implementation BluetoothOrder
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_free];
+}
+
+
+#pragma mark 同步蓝牙数据,获取时间 蓝牙操作步骤七.写值到特征中（就是发数据给外围设备）
+- (void)BluetoothDataSynchronization
+{
+    //开始同步时间
+    [self gainTime];
+    
+}
+
+#pragma maek ***************************************发送传感器指令***************************
+#pragma mark 获取时间
+- (void)gainTime {
+    sendWhat = 1;
+    NSData *data = [DataUtil gainTime];
+    /**
+     *  参数1:外围设备
+     *  参数2:写入的内容
+     *  参数3:特征
+     *  参数4:类型 更多写的方法请看CBPeripheral Class Reference里面的CBCharacteristicWriteType枚举
+     */
+    [_peripherals writeValue:data // 写入的数据
+           forCharacteristic:_characteristic // 写给哪个特征
+                        type:CBCharacteristicWriteWithoutResponse];// 通过此响应记录是否成功写入
+    /**
+     *  例子中，写的方法为CBCharacteristicWriteWithResponse，用这个方法，外围设备会让你的app知道写操作是否成功（就是）。更多写的方法请看CBPeripheral Class Reference里面的CBCharacteristicWriteType枚举。
+     
+     使用CBCharacteristicWriteWithResponse方法给外围设备写数据时，会回调 其代理的peripheral:didWriteValueForCharacteristic:error:方法。如果写数据失败，可以通过这个方法找到失败的原因
+     [_peripherals writeValue:data forCharacteristic:_characteristic
+     
+     type:CBCharacteristicWriteWithResponse];
+     */
+    
+}
+#pragma mark 获取地址
+- (void)gainFlash {
+    sendWhat = 2;
+    NSData *data = [DataUtil gainFlashTime:[[ConfigurationUtil sharedManager] getTimeInterval]];
+    [_peripherals writeValue:data // 写入的数据
+           forCharacteristic:_characteristic // 写给哪个特征
+                        type:CBCharacteristicWriteWithoutResponse];// 通过此响应记录是否成功写入
+}
+
+#pragma mark 获取一段储存器信息
+- (void)getMessage {
+    sendWhat = 3;
+    [_bluetoothDataArray removeAllObjects];
+    //获取批量数据操作
+    NSData *data = [DataUtil receiveMoreRamGainMore:startAddress end:endAddress];
+    [_peripherals writeValue:data // 写入的数据
+           forCharacteristic:_characteristic // 写给哪个特征
+                        type:CBCharacteristicWriteWithoutResponse];
+}
+
+
+
+
+
+#pragma maek ***************************************蓝牙操作***************************
+#pragma mark - CBCentralManager代理方法
+//搜索正在广告的外围设备, 你必须实现这个代理方法来确定中心设备是否支持BLE以及是否可用。
+-(void)centralManagerDidUpdateState:(CBCentralManager *)central{
+    #pragma mark   蓝牙操作连接操作   [步骤二]
+    switch (central.state) {
+        case CBPeripheralManagerStatePoweredOn:
+             [self sendBluetoothLog:@"BLE已打开."];
+            //扫描外围设备
+            [_centralManager scanForPeripheralsWithServices:nil options:nil];
+            break;
+        default:
+            [self sendBluetoothDataMessage:@"此设备不支持BLE或未打开蓝牙功能，无法作为外围设备." error:nil];
+            
+            break;
+    }
+}
+
+/**
+ *  发现外围设备
+ *
+ *  @param central           中心设备
+ *  @param peripheral        外围设备
+ *  @param advertisementData 特征数据
+ *  @param RSSI              信号质量（信号强度）
+ */
+-(void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary *)advertisementData RSSI:(NSNumber *)RSSI{
+    //连接外围设备
+    if (peripheral) {
+        if (_isConnectedDevices == 0) {
+            //定时器,寻找蓝牙设备
+            if (!_peripheralTimer) {
+                [self sendBluetoothLog:@"开启定时搜索外围设备..."];
+                _peripheralTimer =[NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(peripheralTimerAction) userInfo:nil repeats:YES];
+            }
+
+        }
+        
+        //添加保存外围设备，注意如果这里不保存外围设备（或者说peripheral没有一个强引用，无法到达连接成功（或失败）的代理方法，因为在此方法调用完就会被销毁
+        //判断当前蓝牙是否在蓝牙列表中
+//        if(![self.peripheralsList containsObject:peripheral]){
+            NSData *tempData = [advertisementData objectForKey:@"kCBAdvDataManufacturerData"];
+        
+            NSMutableString *addressStr = [NSMutableString stringWithFormat:@"%@",tempData];
+            [self sendBluetoothLog:[NSString stringWithFormat:@"发现外围设备:%@",addressStr]];
+        //判断是否是乐乎传感器蓝牙
+            if ([addressStr hasPrefix:@"<484d"]) {
+                [addressStr deleteCharactersInRange:NSMakeRange(0, 5)];
+                [addressStr deleteCharactersInRange:NSMakeRange(addressStr.length-1, 1)];
+                NSString *tempStr1 = [addressStr stringByReplacingOccurrencesOfString:@" " withString:@""];
+                //判断发现的外围设备是否是需要连接的外围设备
+                if ([_peripheralAddress isEqualToString:[tempStr1 uppercaseString]]) {
+                    _peripherals = peripheral;
+#pragma mark   蓝牙操作连接操作   [步骤三]
+                    //连接一个你搜索到并希望连接的外围设备
+                    [self sendBluetoothLog:@"开始连接外围设备..."];
+                    [self.centralManager connectPeripheral:peripheral options:nil];
+                    //取消扫描蓝牙设备
+                    [self CancelTheScan];
+                }
+            }
+//        }
+    }
+}
+
+#pragma mark 寻找蓝牙设备定时器(定时器时不准确,需要找原因)
+- (void)peripheralTimerAction{
+    
+    if (peripheralTimerNum == 10) {
+       [self CancelTheScan];
+        [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_nil];
+       [self sendBluetoothDataMessage:@"没有找到你的蓝牙设备,请查看外围设备蓝牙状态!" error:nil];
+        [self sendBluetoothTimeout];
+    }
+    peripheralTimerNum++;
+    
+}
+
+//取消扫描蓝牙设备
+- (void)CancelTheScan{
+    //停止扫描
+    [self.centralManager stopScan];
+    if (_peripheralTimer) {
+        [_peripheralTimer setFireDate:[NSDate distantFuture]];
+        [_peripheralTimer invalidate];//取消定时器
+        _peripheralTimer = nil;
+        peripheralTimerNum = 0;
+    }
+}
+
+#pragma mark   蓝牙操作连接操作  连接到外围设备成功时调用.搜索你已经连接的外围设备的服务 >>>[步骤四]
+-(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral{
+     [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_free];
+     [self sendBluetoothLog:@"连接外围设备成功!"];
+    _isConnectedDevices = 1;
+    //在你开始和外围设备交互之前，你应该设置外围设备的代理,设置外围设备的代理为当前视图控制器
+    peripheral.delegate=self;
+    //外围设备开始寻找服务,在你与外围设备建立连接之后，你可以开始勘察它的数据。第一步是勘察外围设备提供了什么服务，因为外围设备广告的数据有大小限制，你或许会发现外围设备提供比它广告的还有更多服务
+    // serviceUUIDs：指定想要扫描的服务(nil表示扫描所有服务)
+    [peripheral discoverServices:nil];
+}
+
+//连接外围设备失败
+-(void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error{
+    [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_nil];
+     [self sendBluetoothLog:@"连接外围设备失败!"];
+    if (error) {
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"连接外围设备失败，错误信息：%@",error.localizedDescription] error:error];
+        
+    }
+}
+
+
+#pragma mark 发现外围设备具体的服务时调用.搜索服务的特征  >>>[步骤五]
+-(void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error{
+     [self sendBluetoothLog:@"已发现可用服务..."];
+    if(error){
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"外围设备寻找服务过程中发生错误，错误信息：%@",error.localizedDescription] error:error];
+    }
+    //Core Bluetooth 建立CBService 类的array数组——存储外围设备的每一个服务
+    //像下面的代码，你可以实现这个代理方法来获得发现的服务列表：
+    for (CBService *service in peripheral.services) {
+        //打印发现的服务列表
+        //         NSLog(@"Discovered service 服务 = %@", service);
+        //        NSLog(@"uuid:%@",service.UUID);
+        //                if([service.UUID isEqual:serviceUUID]){
+        //                    //外围设备查找指定服务中的特征
+        //                    // characteristicUUIDs：可以指定要扫描的特征(nil表示扫描所有特征)
+        //搜索一个服务的所有特征
+        [peripheral discoverCharacteristics:nil forService:service];
+        //                }
+    }
+ 
+}
+
+#pragma mark 扫描到某一个服务的特征的时候调用该方法.取得特征的值（就是从外围设备取数据） >>>[步骤六]
+-(void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error{
+     [self sendBluetoothLog:@"已发现可用特征..."];
+    if(error){
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"外围设备寻找特征过程中发生错误，错误信息：%@",error.localizedDescription] error:error];
+    }
+   
+    //打印每个发现了的特征：
+    for (CBCharacteristic *characteristic in service.characteristics) {
+        //        NSLog(@"characteristic.UUID:%@",characteristic.UUID);
+        //        NSLog(@"Discovered characteristic 特征 = %@", characteristic);
+        //6.1直接读取特征的值
+        //        [peripheral readValueForCharacteristic:characteristic];
+        /**
+         *  在某些使用情况下，通过 readValueForCharacteristic: 读取一个特征的值会很有效率，但是这不是获得值改变的最有效率方法，对于大部分特征值的改变——例如，你在给定时间的心率，你应该通过订阅来获得它。当你订阅了一个特征的值，你可以在值改变的时候接收到通知。你可以通过CBPeripheral类的setNotifyValue:forCharacteristic: 方法来订阅你需要的特征，参数为YES，以及需要订阅的特征：
+         */
+        _characteristic = characteristic;
+        //6.2订阅一个特征的值
+        [peripheral setNotifyValue:YES forCharacteristic:characteristic];
+        
+    }
+    
+}
+
+#pragma mark 当你试图去订阅（或取消订阅）一个特征时，如果订阅请求失败,外围设备会调用的代理方法
+//通过CBPeripheral类的setNotifyValue:forCharacteristic: 方法来订阅你需要的特征,如果订阅请求失败，你可以通过实现这个方法来获得错误原因：
+-(void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error{
+        [self sendBluetoothLog:[NSString stringWithFormat:@"收到特征更新通知...,%@",characteristic.description]];
+    if(error){
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"更新通知状态时发生错误，错误信息：%@",error.localizedDescription] error:error];
+    }
+    
+//    NSLog(@"时间定时器开始>>>>>>");
+    _bluetoothRTCtimer = [NSTimer timerWithTimeInterval:0.1 target:self selector:@selector(bluetoothRTCtimerAction) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_bluetoothRTCtimer forMode:NSRunLoopCommonModes];
+    isCanBeReady = YES;
+}
+
+- (void)bluetoothRTCtimerAction
+{
+    if (bluetoothRTCtimerNum >= 100) {
+        //停止定时器
+        [self stopBluetoothRTCtimer];
+        [self sendBluetoothLog:@"蓝牙连接超时,请重试"];
+        [self sendBluetoothTimeout];
+    }else{
+        //开始建立通道,同步数据
+        [self BluetoothDataSynchronization];
+        bluetoothRTCtimerNum++;
+    }
+}
+
+- (void)stopBluetoothRTCtimer {
+//    NSLog(@"时间定时器停止>>>>>>");
+    if (_bluetoothRTCtimer) {
+        [_bluetoothRTCtimer setFireDate:[NSDate distantFuture]];//让定时器停止执行
+        [_bluetoothRTCtimer invalidate];//取消定时器
+        _bluetoothRTCtimer = nil;
+    }
+}
+
+#pragma mark 直接读取读一个特征对应的值或者外围设备在订阅成功，回调它的代理方法
+//调用readValueForCharacteristic:方法或者外围设备在订阅后更新特征值都会调用此代理方法
+-(void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error{
+    if(error){
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"Error updating value for characteristic %@ error: %@", characteristic.UUID, [error localizedDescription]] error:error];
+        //NSLog(@"更新特征值时发生错误，错误信息：%@",error.localizedDescription);
+        return;
+    }
+
+    
+    if (characteristic.value) {
+        //_peripheralEquipmentUUID = peripheral.identifier.UUIDString;
+        //NSLog(@"---->%@",peripheral.identifier.UUIDString);
+        //如果值成功返回，你可以通过特征的value属性来获得它
+        //NSString *value=[[NSString alloc]initWithData:characteristic.value encoding:NSUTF8StringEncoding];
+        NSLog(@"开始打印接收到数据:\n");
+        if (characteristic.value!=nil) {
+            NSMutableString *allByteStr = [NSMutableString string];
+            Byte *testByte = (Byte*)[characteristic.value bytes];
+            for(int i=0;i<[characteristic.value length];i++){
+                printf("%02X ",testByte[i]);
+                NSString *tempStr = [NSString stringWithFormat:@"%hhu",testByte[i]];
+                if (i == 0) {
+                    [allByteStr appendFormat:@"%@",tempStr];
+                }else {
+                    [allByteStr appendFormat:@",%@",tempStr];
+                }
+            }
+//            NSLog(@"数据输出%@",allByteStr);
+            [self dealBlueReceiveDataAllByteStr:allByteStr AndCharacteristic:characteristic];
+        }
+        
+    }else{
+        [self sendBluetoothDataMessage:@"未发现特征值." error:nil];
+    }
+}
+
+
+#pragma mark 检测蓝牙连接设备是否断开
+- (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
+{
+    [self sendBluetoothStaticUpdate:bluetooth_static_nil];//蓝牙断开
+     [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_nil];
+    _isConnectedDevices = 0;
+    if(error){
+        [self sendBluetoothDataMessage:[NSString stringWithFormat:@"检测蓝牙连接的设备已断开 error: %@",[error localizedDescription]] error:error];
+    }
+
+    
+}
+
+//断开连接
+-(void)disConnect
+{
+    if (_peripherals != nil) {
+        //断开蓝牙
+        [_centralManager cancelPeripheralConnection:_peripherals];
+    }else{
+        if (_blueBlock) {
+            _blueBlock(bluetooth_result_nil,nil,nil);//蓝牙未连接
+        }
+    }
+}
+
+#pragma maek ***************************************处理蓝牙返回的数据***************************
+#pragma maek 处理蓝牙返回的数据
+-(void)dealBlueReceiveDataAllByteStr:(NSMutableString *)allByteStr AndCharacteristic:(CBCharacteristic *)characteristic{
+    NSMutableString *allByteStr1 = [NSMutableString string];
+    Byte *testByte1 = (Byte*)[characteristic.value bytes];
+    for(int i=0;i<[characteristic.value length];i++){
+        printf("%hhu ",testByte1[i]);
+        NSString *tempStr = [NSString stringWithFormat:@"%hhu",testByte1[i]];
+        if (i == 0) {
+            [allByteStr1 appendFormat:@"%@",tempStr];
+        }
+        else
+        {
+            [allByteStr1 appendFormat:@",%@",tempStr];
+        }
+        
+    }
+    NSLog(@"收到的数据 : %@",allByteStr1);
+    if (allByteStr != nil) {
+        switch (sendWhat) {
+                //获取时间返回
+            case Order_send_get_RTCTime:
+                //停止定时器
+                [self stopBluetoothRTCtimer];
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"26,16,227,168"]) {
+                    long tempTime = 0;
+                    if ([DataUtil getRTCTimeSeven:allByteStr]>24) {
+                        tempTime = [DataUtil getRTCTime:allByteStr];
+                    }else {
+                        tempTime = [DataUtil getRTCTimeFormatting:allByteStr];
+                    }
+                    if (tempTime == 0) {
+                        //没有设定时间,去设定
+                        [self setTime];
+                    }else {
+                        if (isCanBeReady) {
+                            //电量
+                            long power = [DataUtil getPower:allByteStr];
+                            if (power > 100) {
+                                power = 100;
+                            }else if (power < 1) {
+                                power = 1;
+                            }
+                            [self sendBluetoothElectricCharge:power];
+                            begainTimes = tempTime;
+                            [self bluetoothReady:@"dianliang"];
+                            [[ConfigurationUtil sharedManager]setBlueStatic:bluetooth_static_free];//等待接受命令
+                            isCanBeReady = NO;
+                        }
+                    }
+                }else {
+                    [self sendBluetoothLog:@"获取时间区间出现错误" type:@"0"];
+                }
+                break;
+                //获取地址返回
+            case Order_send_get_AllFlashMessage:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"11,32,227,168"]) {
+                    endAddress = [DataUtil getEndAddress:allByteStr];
+                    obtainDataCount = (int)endAddress/12;
+                    if (obtainDataCount == 0) {
+                        //无数据
+                        [self sendBluetoothDataMessageWithType:@"0"];
+                        return;
+                    }
+                    
+                    if (isrealTime) {
+                        if (endAddress/12>60) {
+                            startAddress = endAddress-720;
+                        }else {
+                            startAddress = 0;
+                        }
+                    }else {
+                         startAddress = 0;
+                    }
+                    //获取一段存储器信息数据
+                    [self getMessage];
+                    
+                }else {
+                    [self sendBluetoothLog:@"获取地址区间出现错误" type:@"0"];
+                }
+                break;
+                //获取一段存储器信息返回
+            case Order_send_get_SomeFlashMessage:
+                if ([characteristic.value length] >= 4 && [allByteStr hasPrefix:@"252,48,97,86"]){
+                    [self sendBluetoothLog:@"获取一段存储器信息区间出现错误" type:@"0"];
+                    break;
+                }
+                NSTimeInterval timeStamp= [[NSDate date] timeIntervalSince1970];
+                newTimeUpDate = (long)timeStamp;
+                if (_bluetoothDataTimer == nil) {
+                    _bluetoothDataTimer = [NSTimer timerWithTimeInterval:number_timeout target:self selector:@selector(bluetoothDataTimerAction) userInfo:nil repeats:YES];
+                    [[NSRunLoop currentRunLoop] addTimer:_bluetoothDataTimer forMode:NSRunLoopCommonModes];
+                }
+                // 处理第一个蓝牙信息，截取有用的半条flash信息
+                if ([characteristic.value length] == 20 && [allByteStr hasPrefix:@"252,48,227,168"]) {
+                    NSArray *arr = [allByteStr componentsSeparatedByString:@","];
+                    firsDataStr = [NSString stringWithFormat:@"%@,%@,%@,%@",arr[16],arr[17],arr[18],arr[19]];
+//                    NSLog(@"firsDataStr = %@",firsDataStr);
+                    isfirsData = 1;
+                    break;
+                }
+                // 处理收到的第二个蓝牙信息，和前半条第一条蓝牙有效信息合并为第一条蓝牙有效信息
+                if ([characteristic.value length] == 14) {
+                    if (isfirsData == 1) {
+                        NSArray *arr = [allByteStr componentsSeparatedByString:@","];
+                        NSString *secondStr = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@",firsDataStr,arr[0],arr[1],arr[2],arr[3],arr[4],arr[5],arr[6],arr[7],arr[8],arr[9],arr[10],arr[11],arr[12],arr[13]];
+                        NSLog(@"secondStr = %@",secondStr);
+                        isfirsData = 2;
+                        [self dataStr:secondStr];
+                    }else {
+                       [self sendBluetoothLog:@"蓝牙信息长度有误,丢弃该蓝牙信息"];
+                        firsDataStr = nil;
+                    }
+                    break;
+                }
+                if ([characteristic.value length] == 18 && [allByteStr hasPrefix:@"255,255"]) {
+                    [self dataStr:allByteStr];
+                }else {
+                    [self sendBluetoothLog:@"蓝牙信息长度有误,丢弃该蓝牙信息"];
+                }
+                break;
+                //设置时间返回
+            case Order_send_setup_RTCTime:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"10,16,227,168"]) {
+                    isCanBeReady = YES;
+                    // 为了获取电量，所以再请求一次时间
+                    [self gainTime];
+                }else {
+                    [self sendBluetoothLog:@"设置时间区间出现错误" type:@"0"];
+                }
+                break;
+                //获取版本号返回
+            case Order_send_get_Version:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"150,80,227,168"]) {
+                    NSString *hardwareVersion = [DataUtil getHardwareVersion:allByteStr];
+                    NSString *softwareVersion = [DataUtil getSoftwareVersion:allByteStr];
+                    [self sendBluetoothHardVersion:hardwareVersion sorewareVersion:softwareVersion];
+                }else {
+                    [self sendBluetoothLog:@"获取版本号区间出现错误" type:@"0"];
+                }
+                break;
+                //设置打鼾模式
+            case Order_send_get_Snore:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"13,80,227,168"]) {
+                    
+                    [self sendBluetoothSetSnoreSuccessed:@"setSnore"];
+                }else {
+                    [self sendBluetoothLog:@"设置打鼾模式区间出现错误" type:@"0"];
+                }
+                break;
+                //设置闹钟模式
+            case Order_send_get_clock:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"13,96,227,168"]) {
+                    
+                    [self sendBluetoothSetSnoreSuccessed:@"setClock"];
+                }else {
+                    [self sendBluetoothLog:@"设置闹钟模式区间出现错误" type:@"0"];
+                }
+                break;
+                //设置闹钟时间
+            case Order_send_get_clockTime:
+                if ([characteristic.value length] == 16 && [allByteStr hasPrefix:@"12,96,227,168"]) {
+                    
+                    [self sendBluetoothSetSnoreSuccessed:@"setClockTime"];
+                }else {
+                    [self sendBluetoothLog:@"设置闹钟时间区间出现错误" type:@"0"];
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+    
+}
+
+
+
+
+#pragma mark 处理批量返回的数据
+- (void)dataStr:(NSString *)str {
+  
+    BluetoothDataModel *model = [[BluetoothDataModel alloc]init];
+    model.time = begainTimes+[DataUtil getEndTimeCount:str];
+    model.type = [NSString stringWithFormat:@"%d",[DataUtil getEndType:str]];
+    model.address = [DataUtil ToHex:[DataUtil getEndAdd:str]];;
+    model.A = [NSString stringWithFormat:@"%d",[DataUtil getEndparameterA:str]];
+    model.B = [NSString stringWithFormat:@"%d",[DataUtil getEndparameterB:str]];
+    model.CRC = [NSString stringWithFormat:@"%d",[DataUtil getEndCheck:str]];
+    model.deviceid = _peripheralAddress;
+    
+//    NSLog(@"model.time = %ld,model.type = %@,model.A = %@,model.B = %@,model.deviceid = %@",model.time,model.type,model.A,model.B,model.deviceid);
+    if ([model.type intValue] == 1 && ([model.A intValue] > 180 || [model.A intValue]<0)) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"返回心跳率超限，丢弃该信息。\n%@源值:",str]];
+    } else if([model.type intValue]==238&&([model.A intValue]>255||[model.A intValue]<10)){
+        [self sendBluetoothLog:[NSString stringWithFormat:@"返回打鼾次数超限，丢弃该信息。\n%@源值:",str]];
+    }else if ([model.type intValue] == 3 &&([model.A intValue] > 36|| [model.A intValue]<7)) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"返回呼吸率超限，丢弃该信息。\n%@源值:",str]];
+    }else if ([model.type intValue] == 179 &&([model.A intValue] > 255|| [model.A intValue]<0)) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"返回呼吸率变异性值超限，丢弃该信息。\n%@源值:",str]];
+    } else if ([model.type intValue] == 180 &&([model.A intValue] > 255|| [model.A intValue]<0)) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"返回D值超限，丢弃该信息。\n%@源值:",str]];
+    } else if ([model.A intValue] > 32767 || [model.A intValue] < -32768) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"A参数溢出，丢弃该信息。\n%@源值:",str]];
+    } else if ([model.B intValue] < 0 || [model.B intValue] > 255) {
+        [self sendBluetoothLog:[NSString stringWithFormat:@"B参数溢出，丢弃该信息。\n%@源值:",str]];
+    } else if([model.type intValue]!=74&&[model.type intValue]!=1&&[model.type intValue]!=77&&[model.type intValue]!=238&&[model.type intValue]!=3&&[model.type intValue]!=75&&[model.type intValue]!=180&&[model.type intValue]!=179){
+        [self sendBluetoothLog:[NSString stringWithFormat:@"type错误，丢弃该信息。\n%@源值:",str]];
+    } else {
+        [_bluetoothDataArray addObject:model];
+    }
+}
+
+#pragma mark 定时器方法检查一段数据返回是否超时的定时器
+- (void)bluetoothDataTimerAction {
+
+    NSTimeInterval timeStamp= [[NSDate date] timeIntervalSince1970];
+    if ((long)timeStamp - newTimeUpDate > number_timeout) {
+        //定时器要在离里这个页面或蓝牙页面也要断开
+        [_bluetoothDataTimer setFireDate:[NSDate distantFuture]];//让定时器停止执行
+        [_bluetoothDataTimer invalidate];//取消定时器
+        _bluetoothDataTimer = nil;
+        
+        //回传蓝牙信息
+        [self sendBluetoothDataMessageWithType:@"1"];
+
+        //数据请求完毕
+//        if ([self.delegate respondsToSelector:@selector(BluetoothGetBlueMessageOver)]) {
+//            [self.delegate BluetoothGetBlueMessageOver];
+//        };
+        
+        //是否实时请求数据,实时状态不设置时间
+        if (isrealTime) {
+            [self bluetoothReady:@"定时器"];
+        }else {
+            //设置时间
+            [self setTime];
+        }
+      
+    }
+}
+
+
+
+
+
+#pragma mark 供外部调用的方法
+//连接蓝牙
+- (void)ConnectionBluetoothDeviceMacAddress:(NSString *)macAddress block:(BlueBlock)block{
+    
+    int bluetoothStaitc = [[ConfigurationUtil sharedManager] getBlueStatic];
+    if (bluetoothStaitc == bluetooth_static_free) {//如果蓝牙是处于已经连接的状态
+        NSLog(@"_peripheralAddress = %@",_peripheralAddress);
+        //判断连接的是否是同一台设备
+        if ([_peripheralAddress isEqualToString:macAddress]) {
+            if (block) {
+                block(bluetooth_result_ready,nil,nil);
+            }
+            return;
+        }else{
+            //断开另外一台设备
+            if (_peripherals != nil) {
+                [_centralManager cancelPeripheralConnection:_peripherals];
+            }
+            [_bluetoothDataArray removeAllObjects];
+        }
+        
+    }else if(bluetoothStaitc == bluetooth_static_connecting){//如果蓝牙处于正在连接的状态
+        
+        //预防连接超时的处理方式(连接超过10秒则允许再次连接)
+        Boolean b = [GWXWDateUtil isTimeOver:10 withTag:@"static_connecting"];
+        if (!b) {
+            if (block) {
+                block(bluetooth_result_busy,nil,nil);
+            }
+            return;
+        } 
+    }
+    
+    
+    [GWXWDateUtil isTimeOver:0 withTag:@"static_connecting"];//刷新重新连接的开始时间
+    [[ConfigurationUtil sharedManager] setBlueStatic:bluetooth_static_connecting];
+    
+    _blueBlock = block;
+    _peripheralAddress = macAddress;
+    //1, 连接蓝牙
+    if (_centralManager == nil) {
+        _bluetoothDataArray = [NSMutableArray array];
+        //创建中心设备管理器并设置当前控制器视图为代理
+#pragma mark   蓝牙操作连接操作   [步骤一]
+        _centralManager=[[CBCentralManager alloc]initWithDelegate:self queue:nil];
+    }
+    //开始扫描
+    [self.centralManager scanForPeripheralsWithServices:nil options:nil];
+    
+}
+
+
+//初始化蓝牙设备
+- (void)initializeDevice:(BlueBlock)block {
+    
+    //设置时间
+    sendWhat = 4;
+    NSData *data = [DataUtil setTimeFormatting];
+    [_bluetoothDataArray removeAllObjects];
+    [self getBluMessageWithData:data block:block];
+}
+
+// 设置压缩间隔时间,获取所有蓝牙信息
+- (void)getBlueMessageWithTimeInterval:(int)tab block:(BlueBlock)block{
+  
+    //判断压缩时间
+    [[ConfigurationUtil sharedManager] setTimeIntervalWithTab:tab];
+    isrealTime = NO;
+    //获取地址开始获取的入口一段储存器信息
+    sendWhat = 2;
+    NSData *data = [DataUtil gainFlashTime:[[ConfigurationUtil sharedManager] getTimeInterval]];
+    [self getBluMessageWithData:data block:block];
+}
+
+//开启实时
+- (void)getRealTimeMessage:(BlueBlock)block{
+    
+    [[ConfigurationUtil sharedManager] setTimeIntervalWithTab:0];
+    isrealTime = YES;
+    //获取地址开始获取的入口一段储存器信息
+    sendWhat = 2;
+    NSData *data = [DataUtil gainFlashTime:[[ConfigurationUtil sharedManager] getTimeInterval]];
+    [self getBluMessageWithData:data block:block];
+}
+//获取版本号
+- (void)getVersion:(BlueBlock)block{
+   
+    sendWhat = 5;
+    NSData *data = [DataUtil getVersion];
+    
+    [self getBluMessageWithData:data block:block];
+}
+
+//设置打鼾
+- (void)getSnoreNum:(int)num andActivityTime:(int)activity andInterval:(int)interval block:(BlueBlock)block{
+    sendWhat = 6;
+    NSData *data = [DataUtil getSnoreNum:num andActivityTime:activity andInterval:interval];
+    [self getBluMessageWithData:data block:block];
+}
+
+//设置闹钟震动
+- (void)getClockNum:(int)num andActivityTime:(int)activity andInterval:(int)interval block:(BlueBlock)block{
+    sendWhat = 7;
+    NSData *data = [DataUtil getClockNum:num andActivityTime:activity andInterval:interval];
+    [self getBluMessageWithData:data block:block];
+    
+}
+
+//设置闹钟时间
+- (void)getClockTimeNum:(int)num andClockTime:(int)clockPoint andClockNum:(int)clockNum block:(BlueBlock)block{
+    sendWhat = 8;
+    NSData *data = [DataUtil getClockTimeCurrent:num andClockTime:clockPoint andClockNum:clockNum];
+    [self getBluMessageWithData:data block:block];
+}
+
+//断开蓝牙
+- (void)DisconnectBluetooth:(BlueBlock)block{
+    _blueBlock = block;
+    //断开蓝牙连接
+    [self disConnect];
+    [_bluetoothDataArray removeAllObjects];
+}
+
+#pragma mark 供内部调用的方法
+//设置时间
+- (void)setTime {
+    sendWhat = 4;
+    NSData *data = [DataUtil setTimeFormatting];
+    
+    [_bluetoothDataArray removeAllObjects];
+    [_peripherals writeValue:data // 写入的数据
+           forCharacteristic:_characteristic // 写给哪个特征
+                        type:CBCharacteristicWriteWithoutResponse];// 通过此响应记录是否成功写入
+}
+
+//回传提示信息
+-(void)sendBluetoothLog:(NSString *)log{
+   return [self sendBluetoothLog:log type:@"1"];
+}
+//回传提示信息
+-(void)sendBluetoothLog:(NSString *)log type:(NSString *)type{
+    if (log) {
+        if (_blueBlock) {
+            NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:type,@"errorType",log,@"log", nil];
+            _blueBlock(bluetooth_result_log,resultDic,nil);
+        }
+    }
+}
+
+//状态信息改变
+-(void)sendBluetoothStaticUpdate:(int)staticUpdate{
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"%d",staticUpdate],@"staticUpdate", nil];
+        _blueBlock(bluetooth_result_staticupdate,resultDic,nil);
+    }
+}
+
+//版本信息回传
+-(void)sendBluetoothHardVersion:(NSString *)hardwareVersion sorewareVersion:(NSString *)softwareVersion{
+    if (hardwareVersion && softwareVersion) {
+        if (_blueBlock) {
+            NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:hardwareVersion,@"hardwareVersion",softwareVersion,@"softwareVersion", nil];
+            _blueBlock(bluetooth_result_version,resultDic,nil);
+        }
+    }
+}
+
+//电量信息回传
+-(void)sendBluetoothElectricCharge:(long)elec{
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"%ld",elec],@"electric", nil];
+        _blueBlock(bluetooth_result_electricCharge,resultDic,nil);
+    }
+}
+
+//设置打鼾模式成功信息回传
+-(void)sendBluetoothSetSnoreSuccessed:(NSString *)str {
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:@"successed",str, nil];
+        _blueBlock(bluetooth_result_snore,resultDic,nil);
+    }
+}
+
+//蓝牙错误回传 弃用
+-(void)sendBluetoothError:(NSString *)error {
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:error,@"bluetoothError", nil];
+        _blueBlock(bluetooth_result_bluetoothError,resultDic,nil);
+    }
+}
+//蓝牙超时
+-(void)sendBluetoothTimeout{
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:@"timeout",@"bluetoothTimeout", nil];
+        _blueBlock(bluetooth_result_bluetoothTimeout,resultDic,nil);
+    }
+}
+
+//回传蓝牙信息
+-(void)sendBluetoothDataMessageWithType:(NSString *)type{
+    if (_bluetoothDataArray && _blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:type,@"type",_bluetoothDataArray,@"dataArr",[NSString stringWithFormat:@"%d",obtainDataCount],@"dataCount", nil];
+        _blueBlock(bluetooth_result_success,resultDic,nil);
+    }
+    
+}
+
+//回传蓝牙获取数据失败信息
+-(void)sendBluetoothDataMessage:(NSString *)errStr error:(NSError *)error{
+    if (_bluetoothDataArray && _blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:errStr,@"errStr", nil];
+        _blueBlock(bluetooth_result_fail,resultDic,error);
+    }
+    
+}
+
+//回传蓝牙已经准备好接受数据,用与一些需要蓝牙先准备好,然后自动触发的任务
+-(void)bluetoothReady:(NSString *)from{
+    if (_blueBlock) {
+        NSDictionary *resultDic = [NSDictionary dictionaryWithObjectsAndKeys:from,@"from", nil];
+        _blueBlock(bluetooth_result_ready,resultDic,nil);
+    }
+}
+
+
+#pragma mark - 蓝牙操作相关(内部方法)
+//打开蓝牙
+//断开蓝牙
+//连接蓝牙
+//获取数据
+-(void)getBluMessageWithData:(NSData *)data block:(BlueBlock)block{//功能逻辑判断部分
+    
+    int blueStatie = [[ConfigurationUtil sharedManager] getBlueStatic];
+    //判断蓝牙是否是可用状态
+    if ( blueStatie == bluetooth_static_nil || blueStatie == bluetooth_static_connecting) {
+        if (block) {
+            block(bluetooth_result_nil,nil,nil);//蓝牙未连接
+        }
+    }else if ( blueStatie != bluetooth_static_free) {//未知异常(暂时没有实现这类状态)
+        if (block) {
+            block(bluetooth_result_anknow,nil,nil);
+        }
+    }else{//空闲状态
+        return [self getBluMessageWithDataReal:data block:block];
+    }
+}
+
+-(void)getBluMessageWithDataReal:(NSData *)data block:(BlueBlock)block{//实际处理判断部分
+    _blueBlock = block;//设置block
+    
+    //再次确认蓝牙是否可用
+    if (_peripherals && _characteristic) {
+        //发出指令
+        [_peripherals writeValue:data // 写入的数据
+               forCharacteristic:_characteristic // 写给哪个特征
+                            type:CBCharacteristicWriteWithoutResponse];
+    }else{
+        if (block) {
+            block(bluetooth_result_anknow,nil,nil);//未知异常
+        }
+    }
+}
+
+@end

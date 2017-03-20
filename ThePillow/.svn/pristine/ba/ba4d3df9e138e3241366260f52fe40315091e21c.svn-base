@@ -1,0 +1,187 @@
+//
+//  PrefixHeader.pch
+//  GOSPEL
+//
+//  Created by 陈镇池 on 16/4/21.
+//  Copyright © 2016年 lehu. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import "UMMobClick/MobClick.h"
+#import "GWStatisticalUtil.h"
+#import "Masonry.h"
+#import "GWNotification.h"
+#import "UILabel+MyLabel.h"
+#import "NSString+MyNSString.h"
+#import "UIView_extra.h"
+#import "HttpBaseRequestUtil.h"
+#import "SVProgressHUD.h"
+#import "MJExtension.h"
+#import "MJRefresh.h"
+#import "SFHFKeychainUtils.h"
+#import "UIView+Category.h"
+#import "UIColor+Category.h"
+#import "DeviceModel.h"
+#import "DidInfoModel.h"
+#import "UserInfoModel.h"
+#import "Clock.h"
+#import "ConfigModel.h"
+#import "CustomModel.h"
+#import "ClockTimeModel.h"
+#import "BaseDataModel.h"
+#import "ListModel.h"
+#import "LogModel.h"
+#import "LoginAuthentication.h"
+#import "MyTap.h"
+
+
+
+//蓝牙
+#import "BluetoothOrder.h"
+#import "ConfigurationUtil.h"
+#import "GWNSStringUtil.h"
+#import "BlueEnums.h"
+
+//数据库
+#import "MyFMDataManager.h"
+#import "BluetoothDataSqlTool.h"
+#import "BluetoothLogSqlTool.h"
+#import "DeviceListTool.h"
+#import "DeviceDataCacheTool.h"
+
+//工具类
+#import "ListTheCacheClass.h"
+#import "UpdateDeviceDataEnums.h"
+#import "UpdateDeviceData.h"
+
+//公共基础类
+#import "AppDelegate.h"
+#import "BaseViewController.h"
+
+//******************************
+
+static NSString *kAuthScope = @"snsapi_message,snsapi_userinfo,snsapi_friend,snsapi_contact";
+
+#pragma mark 导航栏高度
+#define NavHeight self.navigationController.navigationBar.frame.size.height
+
+#pragma mark 数组不为空
+#define ARRAY_IS_NOT_EMPTY(array) (array && [array isKindOfClass:[NSArray class]] && [array count])
+
+//static NSString *kAuthScope = @"snsapi_message,snsapi_userinfo,snsapi_friend,snsapi_contact";
+
+#define kAppDelegate ((AppDelegate *)[UIApplication sharedApplication].delegate)
+
+#pragma mark 设备
+#define iPhone_4 (MainScreenHeight == 480)
+#define iPhone_5 (MainScreenHeight == 568)
+#define iPhone_6 (MainScreenHeight == 667)
+#define iPhone_Plus (MainScreenHeight > 667)
+
+#pragma mark RBG color
+#define RGBA(r,g,b,a) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:a]
+#define RGB(r,g,b) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1.0]
+//主色调 21,180,241
+#define MainColor [UIColor colorWithRed:21/255.0 green:180/255.0 blue:241/255.0 alpha:1.0]
+#define MainColorWhite [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]
+#define MainColorBlack [UIColor colorWithRed:0/255.0 green:0/255.0 blue:0/255.0 alpha:1.0]
+#define MainColorDarkGrey [UIColor colorWithRed:138/255.0 green:138/255.0 blue:138/255.0 alpha:1.0]
+#define MainColorLightGrey [UIColor colorWithRed:199/255.0 green:199/255.0 blue:199/255.0 alpha:1.0]
+#pragma mark 屏幕宽高
+#define MainScreenHeight [UIScreen mainScreen].bounds.size.height
+#define MainScreenWidth [UIScreen mainScreen].bounds.size.width
+
+#pragma mark 屏幕宽高比例
+#define Width [UIScreen mainScreen].bounds.size.width/375
+#define Height [UIScreen mainScreen].bounds.size.height/667
+
+#pragma mark 导航图标大小
+#define NavSize 40
+
+//算 宽加X坐标的和
+#define width_x(view)  view.frame.size.width + view.frame.origin.x
+//算 高加Y坐标的和
+#define height_y(view)  view.frame.size.height + view.frame.origin.y
+
+
+#pragma mark 设置RTC时间
+#define RTC_SET_byte0 0x10 //数据头byte0
+#define RTC_SET_byte1 0x0A //数据头byte1
+
+#pragma mark 获取RTC时间
+#define RTC_GAIN_byte0 0x10 //数据头byte0
+#define RTC_GAIN_byte1 0x1A //数据头byte1
+
+#pragma mark 获取flash信息
+#define FLASH_GAIN_byte0 0x20 //数据头byte0
+#define FLASH_GAIN_byte1 0x0B //数据头byte1
+
+#pragma mark 获取储存器信息
+#define RAM_GAIN_byte0 0x30 //数据头byte0
+#define RAM_GAIN_byte1 0x0C //数据头byte1
+
+#pragma mark 获取更多储存器信息
+#define RAM_GAIN_MORE_byte0 0x30 //数据头byte0
+#define RAM_GAIN_MORE_byte1 0xFC //数据头byte1
+
+#pragma mark 擦除储存器信息
+#define RAM_DELETE_byte0 0x40 //数据头byte0
+#define RAM_DELETE_byte1 0x0D //数据头byte1
+
+#pragma mark 获取设备软硬件版本号
+#define RAM_Num_byte0 0x50 //数据头byte0
+#define RAM_Num_byte1 0x96 //数据头byte1
+
+#pragma mark 设置时间间隔 600,300,180,120,60,30,0
+#define RAM_Time 0 
+
+#define kMaxLength 20 //限制密码长度<20
+
+
+
+////服务器配置
+#define isDebug_Service_head NO
+
+#define REQUEST_HEAD @"http://test.freetis.net:9090" //请求头-内测服务器SSL 
+//#define REQUEST_HEAD @"http://www.freetis.com" //请求头-正式服务器
+//#define REQUEST_HEAD @"http://192.168.0.100:9090" //请求头-本地服务器
+
+#define LANYAN @"http://ec2-52-196-131-65.ap-northeast-1.compute.amazonaws.com:9090/api/uploadfile" //上传蓝牙数据到服务器
+
+#define DEVICE_POST @"/api/registerDevice" //注册设备
+#define DEVICE_UNDO @"/api/unregisterDevice" //取消注册设备
+#define DEVICE_MODIFY @"/api/editDevicee" //修改设备
+#define DEVICE_LIST @"/mobile/deviceList" //设备列表
+#define DATA_GET_ONE @"/api/dataForOneHour" // 获取时间刻度为1小时的数据,以结束时间算起，向前返回不超过24小时的数据
+#define DATA_RAW @"/mobile/realtime" //获取实时数据
+#define DAILY @"/mobile/dailyReportIndex" //获取日报
+#define Change_Avatar @"/mobile/changePortrait" //修改头像
+#define REGISTER @"/mobile/register" //注册用户
+#define LOGIN @"/mobile/login" //登入
+#define LOGOUT @"/mobile/logout" //登出
+#define CHANGE_PASSORD @"/api/changePassord" //修改密码
+#define FORGET_PASSWORD @"/mobile/forgetPassword" //忘记密码
+#define BIND @"/mobile/bind" //绑定设备
+#define SETBIND @"/mobile/setConfigandBind" //绑定设备+Configand
+#define UNBIND @"/mobile/unbind" //解绑设备
+#define ADD_MONITO_MSG @"/mobile/addMonitorMsg" //发送消息
+#define QUERY_MONITO_MSG @"/mobile/queryMonitorMsg" //查询消息
+#define DELETE_MONITOR_MSG @"/mobile/deleteMonitorMsg" //删除消息
+#define Get_Profile @"/mobile/personalInfoGet" //个人资料获取
+#define Update_Profile @"/mobile/personalInfoUpdate" //个人资料修改
+#define Get_Config @"/mobile/getConfig" //个人设备配置获取
+#define Update_Config @"/mobile/setConfig" //个人设备配置修改
+#define GetUploadLog @"/mobile/getUploadLog" //检查后台有没有包名的接口,data为空无包
+#define Share @"/mobile/share" //关注此设备
+
+#define Software_version @"1.0.0" //软件版本
+
+#define UMENG_APPKEY @"588088b365b6d60e64000d9a" //友盟统计appKey
+
+#endif /* PrefixHeader_pch */

@@ -1,0 +1,650 @@
+//
+//  SignsStatisViewController.m
+//  ThePillow
+//
+//  Created by 陈镇池 on 2017/1/6.
+//  Copyright © 2017年 chen_zhenchi_lehu. All rights reserved.
+//
+
+#import "SignsStatisViewController.h"
+#import "ItemsModel.h"
+#import "KIDS-Bridging-Header.h"
+#import "CardChartView.h"
+#import "IntAxisValueFormatter.h"
+#import "FormattingValueFormatter.h"
+
+@interface SignsStatisViewController ()<ChartViewDelegate>
+{
+    UIScrollView * dropDownSCView; //下拉
+}
+
+@property (nonatomic,strong)NSMutableArray *itemsArray; //items数组
+
+@property (nonatomic,strong)NSMutableArray *xVals; //x轴的数据
+@property (nonatomic,strong)NSMutableArray *zeroLineVals; //x轴的固定label数据
+
+
+@property(strong,nonatomic)CardChartView *chartViewHr; //心率图
+@property(strong,nonatomic)CardChartView *chartViewBr; //呼吸图
+@property(strong,nonatomic)CardChartView *chartViewsnore; //打鼾图
+@property(strong,nonatomic)CardChartView *chartViewcmov; //体动图
+
+@property (nonatomic, strong)LineChartData *lineCData1; //心率数据
+
+@property (nonatomic,strong)NSMutableArray *dataHrX; //心率多少条线
+@property (nonatomic,strong)NSMutableArray *dataBrX; //呼吸多少条线
+@property (nonatomic,strong)NSMutableArray *dataSnoreArr; //打鼾数据
+@property (nonatomic,strong)NSMutableArray *dataCmoveArr; //体动数据
+
+@property (nonatomic,strong)NSMutableArray *dataHr; //心率数据
+@property (nonatomic,strong)NSMutableArray *dataBr; //呼吸率数据
+@property (nonatomic,strong)NSMutableArray *dataSnore; //打鼾数据
+@property (nonatomic,strong)NSMutableArray *dataCmov; //体动数据
+
+
+
+
+@end
+
+@implementation SignsStatisViewController
+
+
+
+- (void)viewDidLoad {
+    
+    [super viewDidLoad];
+    
+    [self navSet:@"体征统计"];
+    
+    //处理数据
+    _itemsArray = [NSMutableArray array];
+    for (NSDictionary *tempDic in _detailModrel.items) {
+        ItemsModel *itemsModel = [ItemsModel objectWithKeyValues:tempDic];
+        [_itemsArray addObject:itemsModel];
+    }
+    
+    //X轴上面需要显示的数据
+    _xVals = [NSMutableArray array];
+    _zeroLineVals = [NSMutableArray array];
+    for (int i = 0; i <= 64800; i += 1800) {
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:36000 + i];
+        NSString *a = [[NSString alloc] initWithDate:date format:@"HH:mm"];
+        [_xVals addObject:a];
+        
+        ChartDataEntry *entryLine = [[ChartDataEntry alloc] initWithX:i/1800 y:0];
+        [_zeroLineVals addObject:entryLine];
+    }
+    
+    // 处理数据
+    [self dealData];
+    
+    //主元素
+    [self layoutScrollView];
+    
+    [self chartHeartRate];
+    
+    _chartViewHr.lineChartView.data = [self setDataArry:_dataHrX andIndex:1];
+    [_chartViewHr.lineChartView animateWithYAxisDuration:2.0f];
+    
+   
+    _chartViewBr.lineChartView.data = [self setDataArry:_dataBrX andIndex:2];
+    
+    [_chartViewBr.lineChartView animateWithYAxisDuration:2.0f];
+
+    _chartViewsnore.barChartView.data = [self setSnoreDataArry:_dataSnoreArr andIndex:1];
+    [_chartViewsnore.barChartView animateWithYAxisDuration:2.0f];
+    
+    _chartViewcmov.barChartView.data = [self setSnoreDataArry:_dataCmoveArr andIndex:2];
+    [_chartViewcmov.barChartView animateWithYAxisDuration:2.0f];
+
+}
+
+#pragma -mark ScrollView的布局和相关属性
+-(void)layoutScrollView
+{
+    
+    dropDownSCView = [[UIScrollView alloc]initWithFrame:CGRectMake(0,0,MainScreenWidth,MainScreenHeight)];
+    dropDownSCView.contentSize=CGSizeMake(0, MainScreenHeight-64);
+    [self.view addSubview:dropDownSCView];
+  
+}
+
+#pragma mark chart1 心率
+- (void)chartHeartRate {
+    
+    
+    
+    _chartViewHr = [[CardChartView alloc]initWithFrame:CGRectMake(0, 20, MainScreenWidth, 300)];
+    _chartViewHr.lineChartView.frame = CGRectMake(0,30, MainScreenWidth, 150);
+    _chartViewHr.lineChartView.delegate = self;
+    [dropDownSCView addSubview:_chartViewHr];
+    _chartViewHr.lineChartView.scaleXEnabled = YES;//取消X轴缩放
+    
+    
+    
+    ChartYAxis *leftAxis = _chartViewHr.lineChartView.leftAxis;//获取左边Y轴
+    leftAxis.axisMinValue = 40;//设置Y轴的最小值
+    leftAxis.axisMaxValue = 120;//设置Y轴的最大值
+    leftAxis.labelTextColor = [UIColor blackColor];
+    leftAxis.axisLineColor = [UIColor lightGrayColor];
+    leftAxis.valueFormatter = [[IntAxisValueFormatter alloc]init];
+    
+    ChartXAxis *xAxis = _chartViewHr.lineChartView.xAxis;
+    xAxis.labelTextColor = [UIColor blackColor];
+    xAxis.axisLineColor = [UIColor lightGrayColor];
+    xAxis.valueFormatter = [[IntAxisValueFormatter alloc]initWithArr:_xVals];
+
+    _chartViewHr.titleLb.text = NSLocalizedString(@"bluetooth_real_time_fragment_hr_label",nil);
+    
+    //心率
+    if (_detailModrel.hr != nil) {
+        _chartViewHr.midLb.text = _detailModrel.hr ;
+    }else {
+        _chartViewHr.midLb.text  = @"0";
+    }
+    NSString *maxHr = [NSString stringWithFormat:@"%@",[_dataHr valueForKeyPath:@"@max.floatValue"]];
+    if ([maxHr intValue] == 0) {
+        maxHr = @"0";
+    }
+    _chartViewHr.maxLb.text = maxHr;
+    NSString *minHr = [NSString stringWithFormat:@"%@",[_dataHr valueForKeyPath:@"@min.floatValue"]];
+    if ([minHr intValue] != 0) {
+        _chartViewHr.minLb.text = minHr;
+    }else {
+        _chartViewHr.minLb.text  = @"0";
+    }
+    
+    [self brChartView];
+    
+}
+
+
+#pragma mark chart2 呼吸
+- (void)brChartView {
+    
+    UIView *line50 = [[UIView alloc]initWithFrame:CGRectMake(0, height_y(_chartViewHr)+20, MainScreenWidth, 1)];
+    line50.backgroundColor = RGB(199, 199, 199);
+    [dropDownSCView addSubview:line50];
+    
+    _chartViewBr = [[CardChartView alloc]initWithFrame:CGRectMake(0, height_y(line50), MainScreenWidth, 300)];
+    _chartViewBr.lineChartView.frame = CGRectMake(0,30, MainScreenWidth, 150);
+    _chartViewBr.lineChartView.delegate = self;
+    [dropDownSCView addSubview:_chartViewBr];
+
+    
+    ChartYAxis *leftAxis = _chartViewBr.lineChartView.leftAxis;//获取左边Y轴
+    leftAxis.axisMinValue = 0;//设置Y轴的最小值
+    leftAxis.axisMaxValue = 40;//设置Y轴的最大值
+    leftAxis.labelTextColor = [UIColor blackColor];
+    leftAxis.axisLineColor = [UIColor lightGrayColor];
+   
+    leftAxis.valueFormatter = [[IntAxisValueFormatter alloc]init];
+    
+    _chartViewBr.lineChartView.scaleXEnabled = YES;//取消X轴缩放
+    ChartXAxis *xAxis = _chartViewBr.lineChartView.xAxis;
+    xAxis.labelTextColor = [UIColor blackColor];
+    xAxis.axisLineColor = [UIColor lightGrayColor];
+    
+    
+   _chartViewBr.lineChartView.xAxis.valueFormatter = [[IntAxisValueFormatter alloc]initWithArr:_xVals];
+    
+    
+    
+    _chartViewBr.titleLb.text = NSLocalizedString(@"detail_fragment_breath",nil);
+    
+    //呼吸
+    if ([_detailModrel.br intValue] != 0) {
+        _chartViewBr.midLb.text = _detailModrel.br;
+    }else {
+        _chartViewBr.midLb.text = @"0";
+    }
+    NSString *maxbr = [NSString stringWithFormat:@"%@",[_dataBr valueForKeyPath:@"@max.floatValue"]];
+    if ([maxbr intValue] != 0) {
+        _chartViewBr.maxLb.text = maxbr;
+    }else {
+        _chartViewBr.maxLb.text = @"0";
+    }
+    NSString *minbr = [NSString stringWithFormat:@"%@",[_dataBr valueForKeyPath:@"@min.floatValue"]];
+    if ([minbr intValue] != 0) {
+        _chartViewBr.minLb.text = minbr;
+    }else {
+        _chartViewBr.minLb.text = @"0";
+    }
+    
+    [self snoreChartView];
+}
+
+#pragma mark chart3 打鼾
+- (void)snoreChartView {
+    
+    UIView *line51 = [[UIView alloc]initWithFrame:CGRectMake(0, height_y(_chartViewBr)+20, MainScreenWidth, 1)];
+    line51.backgroundColor = RGB(199, 199, 199);
+    [dropDownSCView addSubview:line51];
+    
+    _chartViewsnore = [[CardChartView alloc]initWithFrame:CGRectMake(0, height_y(line51), MainScreenWidth, 300)];
+    _chartViewsnore.barChartView.frame = CGRectMake(0,30, MainScreenWidth, 150);
+    _chartViewsnore.barChartView.delegate = self;
+    [dropDownSCView addSubview:_chartViewsnore];
+    
+    
+    
+    _chartViewsnore.barChartView.scaleXEnabled = NO;//取消X轴缩放
+    
+    
+    ChartXAxis *xAxisBar = _chartViewsnore.barChartView.xAxis;//获取左边Y轴
+    xAxisBar.drawLabelsEnabled = YES; //不显示文字
+    
+    _chartViewsnore.barChartView.xAxis.valueFormatter = [[IntAxisValueFormatter alloc]initWithArr:_xVals];
+    
+    ChartYAxis *leftAxis = _chartViewBr.lineChartView.leftAxis;//获取左边Y轴
+    leftAxis.valueFormatter = [[IntAxisValueFormatter alloc]init];
+    
+    _chartViewsnore.titleLb.text = NSLocalizedString(@"detail_fragment_snore",nil);
+    _chartViewsnore.averageLb.text = NSLocalizedString(@"detail_fragment_total",nil);
+
+    //打鼾
+    NSString *snoringStr = NSLocalizedString(@"detail_fragment_minute",nil);
+    NSMutableAttributedString *strSnoring = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",_detailModrel.snore,snoringStr]];
+    [strSnoring addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:35] range:NSMakeRange(0,_detailModrel.snore.length)];
+    [strSnoring addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(_detailModrel.snore.length,snoringStr.length)];
+    if ([_detailModrel.snore intValue] == 0) {
+        _chartViewsnore.midLb.text = @"0";
+    }else {
+        _chartViewsnore.midLb.attributedText = strSnoring;
+    }
+
+    NSString *maxSnore = [NSString stringWithFormat:@"%@",[_dataSnore valueForKeyPath:@"@max.floatValue"]];
+    NSMutableAttributedString *strSnoring1 = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",maxSnore,snoringStr]];
+    [strSnoring1 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0,maxSnore.length)];
+    [strSnoring1 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(maxSnore.length,snoringStr.length)];
+    if ([maxSnore intValue] == 0) {
+        _chartViewsnore.maxLb.text = @"0";
+    }else {
+        _chartViewsnore.maxLb.attributedText = strSnoring1;
+    }
+    
+    NSString *minSnore = [NSString stringWithFormat:@"%@",[_dataSnore valueForKeyPath:@"@min.floatValue"]];
+    NSMutableAttributedString *strSnoring2 = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",minSnore,snoringStr]];
+    [strSnoring2 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0,minSnore.length)];
+    [strSnoring2 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(minSnore.length,snoringStr.length)];
+    if ([minSnore intValue] == 0) {
+        _chartViewsnore.minLb.text = @"0";
+    }else {
+        _chartViewsnore.minLb.attributedText = strSnoring2;
+    }
+
+    [self cmovChartView];
+}
+
+
+#pragma mark chart4 体动
+- (void)cmovChartView {
+    
+    UIView *line71 = [[UIView alloc]initWithFrame:CGRectMake(0, height_y(_chartViewsnore)+20, MainScreenWidth, 1)];
+    line71.backgroundColor = RGB(199, 199, 199);
+    [dropDownSCView addSubview:line71];
+    
+    _chartViewcmov = [[CardChartView alloc]initWithFrame:CGRectMake(0, height_y(line71), MainScreenWidth, 300)];
+    _chartViewcmov.barChartView.frame = CGRectMake(0,30, MainScreenWidth, 150);
+    _chartViewcmov.barChartView.delegate = self;
+    [dropDownSCView addSubview:_chartViewcmov];
+    
+    
+    
+    _chartViewcmov.barChartView.scaleXEnabled = NO;//取消X轴缩放
+    
+    ChartYAxis *leftAxis = _chartViewBr.lineChartView.leftAxis;//获取左边Y轴
+    leftAxis.valueFormatter = [[IntAxisValueFormatter alloc]init];
+    
+    ChartXAxis *xAxisBar = _chartViewcmov.barChartView.xAxis;//获取左边Y轴
+    xAxisBar.drawLabelsEnabled = YES; //不显示文字
+    
+    _chartViewcmov.barChartView.xAxis.valueFormatter = [[IntAxisValueFormatter alloc]initWithArr:_xVals];
+    
+    
+    
+    _chartViewcmov.titleLb.text = NSLocalizedString(@"detail_fragment_Movement",nil);
+    _chartViewcmov.averageLb.text = NSLocalizedString(@"detail_fragment_total",nil);
+    
+    //体动
+    NSString *cmovString = NSLocalizedString(@"detail_fragment_time",nil);
+    NSMutableAttributedString *stringCmov = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",_detailModrel.cmov,cmovString]];
+    [stringCmov addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:35] range:NSMakeRange(0,_detailModrel.cmov.length)];
+    [stringCmov addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(_detailModrel.cmov.length,cmovString.length)];
+    if ([_detailModrel.cmov intValue] == 0) {
+        _chartViewcmov.midLb.text = @"0";
+    }else {
+        _chartViewcmov.midLb.attributedText = stringCmov;
+    }
+    
+    NSString *maxCmov = [NSString stringWithFormat:@"%@",[_dataCmov valueForKeyPath:@"@max.floatValue"]];
+    NSMutableAttributedString *strCmov1 = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",maxCmov,cmovString]];
+    [strCmov1 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0,maxCmov.length)];
+    [strCmov1 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(maxCmov.length,cmovString.length)];
+    if ([maxCmov intValue] == 0) {
+        _chartViewcmov.maxLb.text = @"0";
+    }else {
+        _chartViewcmov.maxLb.attributedText = strCmov1;
+    }
+    
+    NSString *minCmov = [NSString stringWithFormat:@"%@",[_dataCmov valueForKeyPath:@"@min.floatValue"]];
+    NSMutableAttributedString *strCmov2 = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@%@",minCmov,cmovString]];
+    [strCmov2 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0,minCmov.length)];
+    [strCmov2 addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:8] range:NSMakeRange(minCmov.length,cmovString.length)];
+    if ([minCmov intValue] == 0) {
+        _chartViewcmov.minLb.text = @"0";
+    }else {
+        _chartViewcmov.minLb.attributedText = strCmov2;
+    }
+    
+    
+
+    dropDownSCView.contentSize=CGSizeMake(0, height_y(_chartViewcmov)+20+64);
+    
+}
+
+
+#pragma mark 处理返回数据
+- (void)dealData {
+    _dataHrX = [NSMutableArray array];
+    _dataBrX = [NSMutableArray array];
+    _dataSnoreArr = [NSMutableArray array];
+    _dataCmoveArr = [NSMutableArray array];
+    _dataHr = [NSMutableArray array];
+    _dataBr = [NSMutableArray array];
+    _dataSnore = [NSMutableArray array];
+    _dataCmov = [NSMutableArray array];
+    
+    NSMutableArray *dataTempHr = [NSMutableArray array];
+    NSMutableArray *dataTempBr = [NSMutableArray array];
+    float tempIndexHr = 17.5;
+    float tempIndexBr = 17.5;
+    for (int i = 0; i < _itemsArray.count; i++) {
+        ItemsModel *model = [_itemsArray objectAtIndex:i];
+        NSString *timeStr = [model.date substringWithRange:NSMakeRange(11, 5)];
+        float timeData = [self transformationTime:timeStr];
+        if (timeData<=12) {
+            timeData += 24;
+        }
+        //心率
+        if ([model.hr intValue]>=40 &&[model.hr intValue]<=120) {
+            if (((timeData - tempIndexHr)> 0.5 && tempIndexHr != 17.5)) {
+                NSMutableArray *arr = [dataTempHr copy];
+                if (arr.count>0) {
+                     [_dataHrX addObject:arr];
+                }
+                [dataTempHr removeAllObjects];
+            }
+            model.xIndex  = (timeData-18)/0.5;
+//            NSLog(@"model.xIndex  = %ld",(long)model.xIndex );
+            ChartDataEntry *entry = [[ChartDataEntry alloc] initWithX:(double)model.xIndex y:[model.hr intValue]];
+            
+            //插入对象不为空
+            if (entry) {
+                [dataTempHr addObject:entry];
+            }
+            [_dataHr addObject:model.hr];
+            tempIndexHr = timeData;
+        }
+        if (i == _itemsArray.count-1) {
+            NSMutableArray *arr = [dataTempHr copy];
+            if (arr.count>0) {
+                [_dataHrX addObject:arr];
+            }
+            NSMutableArray *arr1 = [dataTempBr copy];
+            if (arr1.count>0) {
+                [_dataBrX addObject:arr1];
+            }
+        }
+        //呼吸率
+        if ([model.br intValue]>1 &&[model.br intValue]<=40) {
+            if (((timeData - tempIndexBr)> 0.5 && tempIndexBr != 17.5)) {
+                NSMutableArray *arr = [dataTempBr copy];
+                if (arr.count>0) {
+                    [_dataBrX addObject:arr];
+                }
+                [dataTempBr removeAllObjects];
+            }
+            model.xIndex  = (timeData-18)/0.5;
+            ChartDataEntry *entry = [[ChartDataEntry alloc] initWithX:(int)model.xIndex y:[model.br intValue]];
+
+            //插入对象不为空
+            if (entry != nil) {
+                [dataTempBr addObject:entry];
+            }
+            [_dataBr addObject:model.br];
+            tempIndexBr = timeData;
+        }
+        //打鼾
+        if ([model.snore intValue]>=0) {
+            model.xIndex  = (timeData-18)/0.5;
+//            CandleChartDataEntry *entry = [[CandleChartDataEntry alloc]initWithXIndex:model.xIndex shadowH:[model.snore doubleValue] shadowL:0 open:[model.snore doubleValue] close:0];
+            CandleChartDataEntry *entry = [[CandleChartDataEntry alloc]initWithX: (int)model.xIndex shadowH:[model.snore intValue] shadowL:0 open:[model.snore intValue] close:0];
+            if (i==0  && model.xIndex!=0) {
+                CandleChartDataEntry *entryBar = [[CandleChartDataEntry alloc]initWithX:0 shadowH:0 shadowL:0 open:0 close:0];
+                [_dataSnoreArr addObject:entryBar];
+            }
+            if (i==_itemsArray.count-1 && model.xIndex !=36) {
+                CandleChartDataEntry *entryBar1 = [[CandleChartDataEntry alloc]initWithX:36 shadowH:0 shadowL:0 open:0 close:0];
+                [_dataSnoreArr addObject:entryBar1];
+            }
+
+            //插入对象不为空
+            if (entry) {
+                [_dataSnoreArr addObject:entry];
+            }
+            
+            if ([model.snore floatValue]> 0) {
+                [_dataSnore addObject:model.snore];
+            }
+        }
+        
+        //体动
+        if ([model.cmov intValue]>=0) {
+            
+            model.xIndex  = (timeData-18)/0.5;
+//            CandleChartDataEntry *entry = [[CandleChartDataEntry alloc]initWithXIndex:model.xIndex shadowH:[model.cmov doubleValue] shadowL:0 open:[model.cmov doubleValue] close:0];
+            CandleChartDataEntry *entry = [[CandleChartDataEntry alloc]initWithX:(int)model.xIndex shadowH:[model.cmov intValue] shadowL:0 open:[model.cmov intValue] close:0];
+            if (i==0  && model.xIndex!=0) {
+                CandleChartDataEntry *entryBar = [[CandleChartDataEntry alloc]initWithX:0 shadowH:0 shadowL:0 open:0 close:0];
+                [_dataCmoveArr addObject:entryBar];
+            }
+            if (i==_itemsArray.count-1 && model.xIndex !=36) {
+                CandleChartDataEntry *entryBar1 = [[CandleChartDataEntry alloc]initWithX:36 shadowH:0 shadowL:0 open:0 close:0];
+                [_dataCmoveArr addObject:entryBar1];
+            }
+
+            //插入对象不为空
+            if (entry) {
+                [_dataCmoveArr addObject:entry];
+            }
+            
+            if ([model.cmov floatValue]> 0) {
+                [_dataCmov addObject:model.cmov];
+            }
+        }
+        
+    }
+    
+    [_dataHrX addObject:_zeroLineVals];
+    [_dataBrX addObject:_zeroLineVals];
+    
+    if (_itemsArray.count == 0) {
+        CandleChartDataEntry *entryBar = [[CandleChartDataEntry alloc]initWithX:0 shadowH:0 shadowL:0 open:0 close:0];
+        CandleChartDataEntry *entryBar1 = [[CandleChartDataEntry alloc]initWithX:36 shadowH:0 shadowL:0 open:0 close:0];
+        [_dataSnoreArr addObject:entryBar];
+        [_dataSnoreArr addObject:entryBar1];
+        [_dataCmoveArr addObject:entryBar];
+        [_dataCmoveArr addObject:entryBar1];
+    }
+    
+}
+
+
+#pragma mark 为心率图设置数据
+- (LineChartData *)setDataArry:(NSMutableArray *)array andIndex:(int)index{
+    
+    //将 LineChartDataSet 对象放入数组中
+    NSMutableArray *dataSets = [[NSMutableArray alloc] init];
+    for (int i = 0; i<array.count; i++) {
+        NSMutableArray *yVals = [array objectAtIndex:i];
+        //创建LineChartDataSet对象
+        LineChartDataSet *set1  = [[LineChartDataSet alloc]initWithValues:yVals];
+        set1.drawCubicEnabled = YES; //曲线
+        set1.values = yVals;
+        //设置折线的样式
+        set1.lineWidth = 2.0;//折线宽度
+        set1.drawValuesEnabled = YES;//是否在拐点处显示数据
+
+        
+        //显示数据格式
+        set1.valueFormatter = [[FormattingValueFormatter alloc]init];
+        
+        set1.mode = LineChartModeHorizontalBezier;   // 弧度mode
+        
+        //折线拐点样式
+        set1.drawCirclesEnabled = YES;//是否绘制拐点
+        set1.circleRadius = 0.5f;//拐点半径
+        set1.drawCircleHoleEnabled = NO;//是否绘制中间的空心
+        
+        if (index == 1) {
+            [set1 setColor:[UIColor redColor]];//折线颜色
+            set1.circleColors = @[[UIColor redColor]];//拐点颜色
+        }else if (index == 2) {
+            [set1 setColor:RGB(113, 254, 84)];//折线颜色
+            set1.circleColors = @[RGB(113, 254, 84)];//拐点颜色
+        }
+        
+        if (array.count-1 == i) {
+            [set1 setColor:[UIColor clearColor]];//折线颜色
+            set1.circleColors = @[[UIColor clearColor]];//拐点颜色
+        }
+        
+//        set1.valueColors = @[[UIColor blackColor]];//折线拐点处显示数据的颜色
+        set1.valueTextColor = [UIColor blackColor];//文字颜色
+        //点击选中拐点的交互样式
+        set1.highlightEnabled = NO;//选中拐点,是否开启高亮效果(显示十字线)
+        //插入对象不为空
+        if (set1) {
+            [dataSets addObject:set1];
+        }
+        
+    }
+    
+    
+    //创建 LineChartData 对象, 此对象就是lineChartView需要最终数据对象
+    LineChartData *data = [[LineChartData alloc] initWithDataSets:dataSets];
+    [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:6.f]];//文字字体
+    [data setValueTextColor:[UIColor blackColor]];//文字颜色
+    
+                                                          
+    
+    return data;
+}
+
+
+#pragma mark 为打鼾图设置数据
+- (CandleChartData *)setSnoreDataArry:(NSMutableArray *)array andIndex:(NSInteger)index{
+    
+    //创建CandleChartDataSet对象
+    CandleChartDataSet *set1 = [[CandleChartDataSet alloc] initWithValues:array];
+    set1.axisDependency = AxisDependencyLeft;
+    if (index == 1) {
+        set1.decreasingColor = RGB(228, 100, 66);//柱状颜色
+    }else if (index == 2) {
+        set1.decreasingColor = RGB(255, 231, 156);//柱状颜色
+    }
+
+    set1.neutralColor =[UIColor whiteColor]; //数据为0柱状颜色
+    
+    set1.valueTextColor = [UIColor blackColor];//文字颜色
+
+    set1.valueFormatter = [[FormattingValueFormatter alloc]init];
+    
+//    [set1 setColor:[UIColor whiteColor]];
+    
+    set1.decreasingFilled = YES; //是否空心
+    
+    
+    //点击选中拐点的交互样式
+    set1.highlightEnabled = NO;//选中拐点,是否开启高亮效果(显示十字线)
+    
+//    CandleChartData *data = [[CandleChartData alloc] initWithXVals:_xVals dataSet:set1];
+    CandleChartData *data = [[CandleChartData alloc] initWithDataSet:set1];
+//    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+//    //自定义数据显示格式
+//    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
+//    //            [formatter setPositiveFormat:@"#0.0"];
+//    
+//    [data setValueFormatter:formatter];
+    return data;
+}
+
+#pragma mark 没有选中折线拐点时回调
+- (void)chartValueNothingSelected:(ChartViewBase * _Nonnull)chartView{
+    if (chartView == _chartViewHr.lineChartView) {
+        
+        [_chartViewHr.lineChartView zoomWithScaleX:0 scaleY:0 x:0 y:0];
+        LineChartData *data = (LineChartData *)_chartViewHr.lineChartView.data;
+        [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:6.f*_chartViewHr.lineChartView.scaleX]];//文字字体
+        
+        
+    }else if (chartView == _chartViewBr.lineChartView) {
+        
+        [_chartViewBr.lineChartView zoomWithScaleX:0 scaleY:0 x:0 y:0];
+        LineChartData *data = (LineChartData *)_chartViewBr.lineChartView.data;
+        [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:6.f*_chartViewBr.lineChartView.scaleX]];//文字字体
+        
+    }
+    
+}
+
+
+#pragma mark 后台时间处理
+- (float)transformationTime:(NSString *)time {
+    if ([[time substringWithRange:NSMakeRange(3,2)] isEqualToString:@"00"]) {
+        return [[time substringWithRange:NSMakeRange(0,2)] floatValue];
+    }else {
+        return [[time substringWithRange:NSMakeRange(0,2)] floatValue]+0.5;
+    }
+    
+}
+
+
+#pragma mark 放大图表时回调
+- (void)chartScaled:(ChartViewBase * _Nonnull)chartView scaleX:(CGFloat)scaleX scaleY:(CGFloat)scaleY{
+    if (chartView == _chartViewHr.lineChartView) {
+        LineChartData *data = (LineChartData *)_chartViewHr.lineChartView.data;
+        if (_chartViewHr.lineChartView.scaleX<2.5) {
+            [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:6.f*_chartViewHr.lineChartView.scaleX]];//文字字体
+        }else {
+            [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:15.f]];//文字字体
+        }
+        
+        //        NSLog(@"chartVieHr.lineChartView.scaleX = %f",_chartViewHr.lineChartView.scaleX);
+    }else if (chartView == _chartViewBr.lineChartView) {
+        LineChartData *data = (LineChartData *)_chartViewBr.lineChartView.data;
+        if (_chartViewBr.lineChartView.scaleX<2.5) {
+            [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:6.f*_chartViewBr.lineChartView.scaleX]];//文字字体
+        }else {
+            [data setValueFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:15.f]];//文字字体
+        }
+        
+        //        NSLog(@"chartVieHr.lineChartView.scaleY = %f",_chartViewBr.lineChartView.scaleX);
+    }
+    
+    //    NSLog(@"---chartScaled---scaleX:%g, scaleY:%g,", scaleX, scaleY);
+}
+
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end
